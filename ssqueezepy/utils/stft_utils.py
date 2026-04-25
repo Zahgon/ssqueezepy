@@ -68,34 +68,12 @@ def buffer(x, seg_len, n_overlap, modulated=False, parallel=None):
 
 @jit(nopython=True, cache=True)
 def _buffer(x, out, seg_len, n_segs, hop_len, s20, s21, modulated=False):
-    for i in range(n_segs):
-        if not modulated:
-            start = hop_len * i
-            end   = start + seg_len
-            out[:, i] = x[start:end]
-        else:
-            start0 = hop_len * i
-            end0   = start0 + s21
-            start1 = end0
-            end1   = start1 + s20
-            out[:s20, i] = x[start1:end1]
-            out[s20:, i] = x[start0:end0]
+    pass
 
 
 @jit(nopython=True, cache=True, parallel=True)
 def _buffer_par(x, out, seg_len, n_segs, hop_len, s20, s21, modulated=False):
-    for i in prange(n_segs):
-        if not modulated:
-            start = hop_len * i
-            end   = start + seg_len
-            out[:, i] = x[start:end]
-        else:
-            start0 = hop_len * i
-            end0   = start0 + s21
-            start1 = end0
-            end1   = start1 + s20
-            out[:s20, i] = x[start1:end1]
-            out[s20:, i] = x[start0:end0]
+    pass
 
 
 def _buffer_gpu(x, seg_len, n_segs, hop_len, s20, s21, modulated=False, out=None):
@@ -220,20 +198,4 @@ def window_area(window, time=True, frequency=False):
     """Minimal function to compute a window's time or frequency 'area' as area
     under curve of `abs(window)**2`. `window` must be np.ndarray.
     """
-    from ..wavelets import _xifn
-    if not time and not frequency:
-        raise ValueError("must compute something")
-
-    if time:
-        t = np.arange(-len(window)/2, len(window)/2, step=1)
-        at = integrate.trapezoid(np.abs(window)**2, t)
-    if frequency:
-        ws = fftshift(_xifn(1, len(window)))
-        apsih2s = np.abs(fftshift(fft(window)))**2
-        aw = integrate.trapezoid(apsih2s, ws)
-
-    if time and frequency:
-        return at, aw
-    elif time:
-        return at
-    return aw
+    pass

@@ -76,7 +76,7 @@ from .configs import IS_PARALLEL, USE_GPU
 
 
 def wavs():
-    return wavelets.Wavelet.SUPPORTED
+    pass
 
 
 _modules_toplevel = [

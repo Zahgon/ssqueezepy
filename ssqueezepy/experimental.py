@@ -48,38 +48,7 @@ def freq_to_scale(freqs, wavelet, N, fs=1, n_search_scales=None, kind='peak',
         scales: np.ndarray
             1D arrays of scales.
     """
-    def logb(x, base=2):
-        return np.log(x) / np.log(base)
-
-    def log(x):
-        return logb(x, base)
-
-    freqs = freqs / fs  # convert to unitless, [0., 0.5)
-    assert np.all(freqs >= 0),       "frequencies must be positive"
-    assert freqs.max() <= 0.5,       "max frequency must be 0.5"
-    assert freqs.max() == freqs[-1], "max frequency must be last sample"
-    assert freqs.min() == freqs[0],  "min frequency must be first sample"
-
-    M = len(freqs)
-    if n_search_scales is None:
-        n_search_scales = 10 * M
-    smin, smax = cwt_scalebounds(wavelet, N, preset='maximal', use_padded_N=False)
-    search_scales = np.logspace(log(smin), log(smax), n_search_scales, base=base)
-
-    w_from_scales = []
-    for scale in search_scales:
-        w = center_frequency(wavelet, scale, N, kind=kind)
-        w_from_scales.append(min(max(w, 0), np.pi))
-    f_from_scales = np.array(w_from_scales) / (2*np.pi)
-
-    # pick closest match
-    fmin, fmax = freqs.min(), freqs.max()
-    smax = search_scales[np.argmin(np.abs(f_from_scales - fmin))]
-    smin = search_scales[np.argmin(np.abs(f_from_scales - fmax))]
-    # make scales between found min and max
-    scales = np.logspace(log(smax), log(smin), M, base=base)
-
-    return scales
+    pass
 
 
 def scale_to_freq(scales, wavelet, N, fs=1, padtype='reflect'):
@@ -108,38 +77,7 @@ def scale_to_freq(scales, wavelet, N, fs=1, padtype='reflect'):
         freqs: np.ndarray
             1D arrays of frequencies.
     """
-    # process args
-    if isinstance(scales, float):
-        scales = np.array([scales])
-    wavelet = Wavelet._init_if_not_isinstance(wavelet)
-
-    # evaluate wavelet at `scales`
-    Npad = p2up(N)[0] if padtype is not None else N
-    psis = wavelet(scale=scales, N=Npad)
-    if hasattr(psis, 'cpu'):
-        psis = psis.cpu().numpy()
-    # find peak indices
-    idxs = np.argmax(psis, axis=-1)
-
-    # check
-    # https://github.com/OverLordGoldDragon/ssqueezepy/issues/41
-    if np.any(idxs > Npad//2) or 0 in idxs:
-        warnings.warn("found potentially ill-behaved wavelets (peak indices at "
-                      "negative freqs or at dc); will round idxs to 1 or N/2")
-        n_psis = len(psis)
-        for i, ix in enumerate(idxs):
-            if ix > Npad//2 or ix == 0:
-                if i > n_psis // 2:  # low freq
-                    idxs[i] = 1
-                else:  # high freq
-                    idxs[i] = Npad//2
-    # convert
-    freqs = idxs / Npad  # [0, ..., .5]
-    assert freqs.min() >= 0,   freqs.min()
-    assert freqs.max() <= 0.5, freqs.max()
-
-    freqs *= fs   # [0, ..., fs/2]
-    return freqs
+    pass
 
 
 def phase_ssqueeze(Wx, dWx=None, ssq_freqs=None, scales=None, Sfs=None, fs=1.,
@@ -174,20 +112,7 @@ def phase_ssqueeze(Wx, dWx=None, ssq_freqs=None, scales=None, Sfs=None, fs=1.,
     # Returns:
         Tx, Wx, ssq_freqs, scales, Sfs, w, dWx
     """
-    w, Wx, dWx, Sfs, gamma = phase_transform(
-        Wx, dWx, difftype, difforder=difforder, gamma=gamma, rpadded=rpadded,
-        padtype=padtype, N=N, n1=n1, get_w=get_w, fs=fs, transform=transform)
-
-    if w is not None and not get_dWx:
-        dWx = None
-
-    if maprange is None:
-        maprange = 'peak' if transform == 'cwt' else 'maximal'
-    Tx, ssq_freqs = ssqueeze(Wx, w, ssq_freqs, scales, Sfs, fs=fs, t=t,
-                             squeezing=squeezing, maprange=maprange,
-                             wavelet=wavelet, gamma=gamma, was_padded=was_padded,
-                             flipud=flipud, dWx=dWx, transform=transform)
-    return Tx, Wx, ssq_freqs, scales, Sfs, w, dWx
+    pass
 
 
 def phase_transform(Wx, dWx=None, difftype='trig', difforder=4, gamma=None,
@@ -196,64 +121,4 @@ def phase_transform(Wx, dWx=None, difftype='trig', difforder=4, gamma=None,
     """Unified method for CWT & STFT SSQ phase transforms.
     See `help(_ssq_cwt.phase_cwt)` and `help(_ssq_stft.phase_stft)`.
     """
-    def _cwt(Wx, dWx, fs, gamma, N, n1, difftype, difforder, rpadded, padtype,
-             get_w):
-        # infer `N` and/or `n1`
-        if N is None and not rpadded:
-            N = Wx.shape[-1]
-        if n1 is None:
-            _, n1, _ = p2up(N)
-        # compute `dWx` if not supplied
-        if dWx is None:
-            dWx = trigdiff(Wx, fs, padtype, rpadded, N=N, n1=n1, transform='cwt')
-
-        if get_w:
-            if difftype == 'trig':
-                # calculate instantaneous frequency directly from the
-                # frequency-domain derivative
-                w = phase_cwt(Wx, dWx, difftype, gamma)
-            elif difftype == 'phase':
-                # !!! bad; yields negatives, and forcing abs(w) doesn't help
-                # calculate inst. freq. from unwrapped phase of CWT
-                w = phase_cwt(Wx, None, difftype, gamma)
-            elif difftype == 'numeric':
-                # !!! tested to be very inaccurate for small scales
-                # calculate derivative numericly
-                Wx = Wx[:, (n1 - 4):(n1 + N + 4)]
-                dt = 1 / fs
-                w = phase_cwt_num(Wx, dt, difforder, gamma)
-        else:
-            w = None
-        return w, Wx, dWx
-
-    def _stft(Wx, dWx, fs, gamma, Sfs, get_w):
-        if Sfs is None:
-            Sfs = _make_Sfs(Wx, fs)
-        if get_w:
-            w = phase_stft(Wx, dWx, Sfs, gamma)
-        else:
-            w = None
-        return w, Wx, dWx, Sfs
-
-    # validate args
-    if transform == 'stft' and dWx is None:
-        raise NotImplementedError("`phase_transform` without `dWx` for "
-                                  "STFT is not currently supported.")
-    if rpadded and N is None:
-        raise ValueError("`rpadded=True` requires `N`")
-    if Wx.ndim > 2 and get_w:
-        raise NotImplementedError("`get_w=True` unsupported with batched input.")
-
-    # gamma
-    if gamma is None:
-        gamma = 10 * (EPS64 if S.is_dtype(Wx, 'complex128') else EPS32)
-
-    # take phase transform if `get_w` else only compute `dWx` (if None)
-    if transform == 'cwt':
-        w, Wx, dWx = _cwt(Wx, dWx, fs, gamma, N, n1, difftype, difforder,
-                          rpadded, padtype, get_w)
-        Sfs = None
-    elif transform == 'stft':
-        w, Wx, dWx, Sfs = _stft(Wx, dWx, fs, gamma, Sfs, get_w)
-
-    return w, Wx, dWx, Sfs, gamma
+    pass

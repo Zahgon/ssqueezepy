@@ -171,83 +171,33 @@ def indexed_sum_onfly(Wx, w, ssq_freqs, const=1, logscale=False, flipud=False,
 
 @jit(nopython=True, cache=True)
 def _indexed_sum_log(Wx, w, out, const, vlmin, dvl, omax, flipud=False):
-    for i in range(Wx.shape[0]):
-        for j in range(Wx.shape[1]):
-            if np.isinf(w[i, j]):
-                continue
-            k = int(min(round(max((np.log2(w[i, j]) - vlmin) / dvl, 0)), omax))
-            if flipud:
-                k = omax - k
-            out[k, j] += Wx[i, j] * const[i]
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def _indexed_sum_log_par(Wx, w, out, const, vlmin, dvl, omax, flipud=False):
-    for j in prange(Wx.shape[1]):
-        for i in range(Wx.shape[0]):
-            if np.isinf(w[i, j]):
-                continue
-            k = int(min(round(max((np.log2(w[i, j]) - vlmin) / dvl, 0)), omax))
-            if flipud:
-                k = omax - k
-            out[k, j] += Wx[i, j] * const[i]
+    pass
 
 
 @jit(nopython=True, cache=True)
 def _indexed_sum_log_piecewise(Wx, w, out, const, vlmin0, vlmin1, dvl0, dvl1,
                                idx1, omax, flipud=False):
-    for i in range(Wx.shape[0]):
-        for j in range(Wx.shape[1]):
-            if np.isinf(w[i, j]):
-                continue
-            wl = np.log2(w[i, j])
-            if wl > vlmin1:
-                k = int(min(round((wl - vlmin1) / dvl1) + idx1, omax))
-            else:
-                k = int(round(max((wl - vlmin0) / dvl0, 0)))
-            if flipud:
-                k = omax - k
-            out[k, j] += Wx[i, j] * const[i]
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def _indexed_sum_log_piecewise_par(Wx, w, out, const, vlmin0, vlmin1, dvl0, dvl1,
                                    idx1, omax, flipud=False):
     # it's also possible to construct the if-else logic in terms of mappables
     # of `vlmin`, `dvl`, and `idx`, which generalizes to any number of transitions
-    for j in prange(Wx.shape[1]):
-        for i in range(Wx.shape[0]):
-            if np.isinf(w[i, j]):
-                continue
-            wl = np.log2(w[i, j])
-            if wl > vlmin1:
-                k = int(min(round((wl - vlmin1) / dvl1) + idx1, omax))
-            else:
-                k = int(round(max((wl - vlmin0) / dvl0, 0)))
-            if flipud:
-                k = omax - k
-            out[k, j] += Wx[i, j] * const[i]
+    pass
 
 
 @jit(nopython=True, cache=True)
 def _indexed_sum_lin(Wx, w, out, const, vmin, dv, omax, flipud=False):
-    for i in range(Wx.shape[0]):
-        for j in range(Wx.shape[1]):
-            if np.isinf(w[i, j]):
-                continue
-            k = int(min(round(max((w[i, j] - vmin) / dv, 0)), omax))
-            if flipud:
-                k = omax - k
-            out[k, j] += Wx[i, j] * const[i]
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def _indexed_sum_lin_par(Wx, w, out, const, vmin, dv, omax, flipud=False):
-    for j in prange(Wx.shape[1]):
-        for i in range(Wx.shape[0]):
-            if np.isinf(w[i, j]):
-                continue
-            k = int(min(round(max((w[i, j] - vmin) / dv, 0)), omax))
-            if flipud:
-                k = omax - k
-            out[k, j] += Wx[i, j] * const[i]
+    pass
 
 
 #### `find_closest` algorithms ###############################################
@@ -320,11 +270,7 @@ def find_closest(a, v, logscale=False, parallel=None, smart=None):
 @jit(nopython=True, cache=True, parallel=True)
 def find_closest_brute(a, v):
     """Computes exactly but exhaustively."""
-    out = np.zeros(a.shape, dtype=np.int32)
-    for i in prange(a.shape[0]):
-        for j in prange(a.shape[1]):
-            out[i, j] = np.argmin(np.abs(a[i, j] - v))
-    return out
+    pass
 
 
 def find_closest_smart(a, v):
@@ -389,42 +335,24 @@ def find_closest_log(a, v, parallel=True):
 
 @jit(nopython=True, cache=True)
 def _find_closest_log(a, out, vlmin, dvl, omax):
-    for i in range(a.shape[0]):
-        for j in range(a.shape[1]):
-            out[i, j] = min(round(max((np.log2(a[i, j]) - vlmin) / dvl, 0)), omax)
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def _find_closest_log_par(a, out, vlmin, dvl, omax):
-    for i in prange(a.shape[0]):
-        for j in prange(a.shape[1]):
-            out[i, j] = min(round(max((np.log2(a[i, j]) - vlmin) / dvl, 0)), omax)
+    pass
 
 
 @jit(nopython=True, cache=True)
 def _find_closest_log_piecewise(a, out, vlmin0, vlmin1, dvl0, dvl1, idx1,
                                 omax):
-    for i in range(a.shape[0]):
-        for j in range(a.shape[1]):
-            al = np.log2(a[i, j])
-            if al > vlmin1:
-                out[i, j] = min(round((al - vlmin1) / dvl1) + idx1, omax)
-            else:
-                out[i, j] = round(max((al - vlmin0) / dvl0, 0))
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def _find_closest_log_piecewise_par(a, out, vlmin0, vlmin1, dvl0, dvl1, idx1,
                                     omax):
     # it's also possible to construct the if-else logic in terms of mappables
     # of `vlmin`, `dvl`, and `idx`, which generalizes to any number of transitions
-    for i in prange(a.shape[0]):
-        for j in prange(a.shape[1]):
-            if np.isinf(a[i, j]):
-                continue
-            al = np.log2(a[i, j])
-            if al > vlmin1:
-                out[i, j] = min(round((al - vlmin1) / dvl1) + idx1, omax)
-            else:
-                out[i, j] = round(max((al - vlmin0) / dvl0, 0))
+    pass
 
 
 def find_closest_lin(a, v, parallel=True):
@@ -438,15 +366,11 @@ def find_closest_lin(a, v, parallel=True):
 
 @jit(nopython=True, cache=True)
 def _find_closest_lin(a, out, vmin, dv, omax):
-    for i in range(a.shape[0]):
-        for j in range(a.shape[1]):
-            out[i, j] = min(round(max((a[i, j] - vmin) / dv, 0)), omax)
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def _find_closest_lin_par(a, out, vmin, dv, omax):
-    for i in prange(a.shape[0]):
-        for j in prange(a.shape[1]):
-            out[i, j] = min(round(max((a[i, j] - vmin) / dv, 0)), omax)
+    pass
 
 #### Replacers ###############################################################
 def _process_replace_fn_args(x, ref):
@@ -474,26 +398,14 @@ def replace_at_inf_or_nan(x, ref=None, replacement=0.):
     return x
 
 def replace_at_inf(x, ref=None, replacement=0.):
-    x, ref, xndim = _process_replace_fn_args(x, ref)
-    x = _replace_at_inf(x, ref, replacement)
-    while x.ndim > xndim:
-        x = x.squeeze(axis=-1)
-    return x
+    pass
 
 def replace_at_nan(x, ref=None, replacement=0.):
-    x, ref, xndim = _process_replace_fn_args(x, ref)
-    x = _replace_at_nan(x, ref, replacement)
-    while x.ndim > xndim:
-        x = x.squeeze(axis=-1)
-    return x
+    pass
 
 def replace_at_value(x, ref=None, value=0., replacement=0.):
     """Note: `value=np.nan` won't work (but np.inf will, separate from -np.inf)"""
-    x, ref, xndim = _process_replace_fn_args(x, ref)
-    x = _replace_at_value(x, ref, value, replacement)
-    while x.ndim > xndim:
-        x = x.squeeze(axis=-1)
-    return x
+    pass
 
 def replace_under_abs(x, ref=None, value=0., replacement=0., parallel=None):
     if S.is_tensor(x):
@@ -516,30 +428,15 @@ def _replace_at_inf_or_nan(x, ref, replacement=0.):
 
 @jit(nopython=True, cache=True)
 def _replace_at_inf(x, ref, replacement=0.):
-    for i in range(x.shape[0]):
-        for j in range(x.shape[1]):
-            for k in range(x.shape[2]):
-                if np.isinf(ref[i, j, k]):
-                    x[i, j, k] = replacement
-    return x
+    pass
 
 @jit(nopython=True, cache=True)
 def _replace_at_nan(x, ref, replacement=0.):
-    for i in range(x.shape[0]):
-        for j in range(x.shape[1]):
-            for k in range(x.shape[2]):
-                if np.isnan(ref[i, j, k]):
-                    x[i, j, k] = replacement
-    return x
+    pass
 
 @jit(nopython=True, cache=True)
 def _replace_at_value(x, ref, value=0., replacement=0.):
-    for i in range(x.shape[0]):
-        for j in range(x.shape[1]):
-            for k in range(x.shape[2]):
-                if ref[i, j, k] == value:
-                    x[i, j, k] = replacement
-    return x
+    pass
 
 
 @jit(nopython=True, cache=True)
@@ -602,15 +499,11 @@ def zero_denormals(x, parallel=None):
 
 @jit(nopython=True, cache=True)
 def _zero_denormals(x, tiny):
-    for i in range(x.size):
-        if x[i] < tiny and x[i] > -tiny:
-            x[i] = 0
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def _zero_denormals_par(x, tiny):
-    for i in prange(x.size):
-        if x[i] < tiny and x[i] > -tiny:
-            x[i] = 0
+    pass
 
 #### misc (short) ############################################################
 @jit(nopython=True, cache=True)
@@ -719,25 +612,11 @@ def phase_cwt_cpu(Wx, dWx, gamma, parallel=None):
 
 @jit(nopython=True, cache=True)
 def _phase_cwt(Wx, dWx, out, gamma):
-    for i in range(Wx.shape[0]):
-        for j in range(Wx.shape[1]):
-            if abs(Wx[i, j]) < gamma:
-                out[i, j] = np.inf
-            else:
-                A, B = dWx[i, j].real, dWx[i, j].imag
-                C, D = Wx[i, j].real,  Wx[i, j].imag
-                out[i, j] = abs((B*C - A*D) / ((C**2 + D**2) * 6.283185307179586))
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def _phase_cwt_par(Wx, dWx, out, gamma):
-    for i in prange(Wx.shape[0]):
-        for j in prange(Wx.shape[1]):
-            if abs(Wx[i, j]) < gamma:
-                out[i, j] = np.inf
-            else:
-                A, B = dWx[i, j].real, dWx[i, j].imag
-                C, D = Wx[i, j].real,  Wx[i, j].imag
-                out[i, j] = abs((B*C - A*D) / ((C**2 + D**2) * 6.283185307179586))
+    pass
 
 
 def phase_cwt_gpu(Wx, dWx, gamma):
@@ -793,27 +672,11 @@ def phase_stft_cpu(Wx, dWx, Sfs, gamma, parallel=None):
 
 @jit(nopython=True, cache=True)
 def _phase_stft(Wx, dWx, Sfs, out, gamma):
-    for i in range(Wx.shape[0]):
-        for j in range(Wx.shape[1]):
-            if abs(Wx[i, j]) < gamma:
-                out[i, j] = np.inf
-            else:
-                A, B = dWx[i, j].real, dWx[i, j].imag
-                C, D = Wx[i, j].real,  Wx[i, j].imag
-                out[i, j] = abs(
-                    Sfs[i] - (B*C - A*D) / ((C**2 + D**2) * 6.283185307179586))
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def _phase_stft_par(Wx, dWx, Sfs, out, gamma):
-    for i in prange(Wx.shape[0]):
-        for j in prange(Wx.shape[1]):
-            if abs(Wx[i, j]) < gamma:
-                out[i, j] = np.inf
-            else:
-                A, B = dWx[i, j].real, dWx[i, j].imag
-                C, D = Wx[i, j].real,  Wx[i, j].imag
-                out[i, j] = abs(
-                    Sfs[i] - (B*C - A*D) / ((C**2 + D**2) * 6.283185307179586))
+    pass
 
 def phase_stft_gpu(Wx, dWx, Sfs, gamma):
     kernel = '''
@@ -859,98 +722,30 @@ def phase_stft_gpu(Wx, dWx, Sfs, gamma):
 @jit(nopython=True, cache=True)
 def _ssq_cwt_log_piecewise(Wx, dWx, out, const, gamma, vlmin0, vlmin1,
                            dvl0, dvl1, idx1, omax, flipud=False):
-    for i in range(Wx.shape[0]):
-        for j in range(Wx.shape[1]):
-            if abs(Wx[i, j]) > gamma:
-                A, B = dWx[i, j].real, dWx[i, j].imag
-                C, D = Wx[i, j].real,  Wx[i, j].imag
-                w_ij = abs((B*C - A*D) / ((C**2 + D**2) * 6.283185307179586))
-
-                wl = np.log2(w_ij)
-                if wl > vlmin1:
-                    k = int(min(round((wl - vlmin1) / dvl1) + idx1, omax))
-                else:
-                    k = int(max(round((wl - vlmin0) / dvl0), 0))
-                if flipud:
-                    k = omax - k
-                out[k, j] += Wx[i, j] * const[i]
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def _ssq_cwt_log_piecewise_par(Wx, dWx, out, const, gamma, vlmin0, vlmin1,
                                dvl0, dvl1, idx1, omax, flipud=False):
-    for j in prange(Wx.shape[1]):
-        for i in range(Wx.shape[0]):
-            if abs(Wx[i, j]) > gamma:
-                A, B = dWx[i, j].real, dWx[i, j].imag
-                C, D = Wx[i, j].real,  Wx[i, j].imag
-                w_ij = abs((B*C - A*D) / ((C**2 + D**2) * 6.283185307179586))
-
-                wl = np.log2(w_ij)
-                if wl > vlmin1:
-                    k = int(min(round((wl - vlmin1) / dvl1) + idx1, omax))
-                else:
-                    k = int(max(round((wl - vlmin0) / dvl0), 0))
-                if flipud:
-                    k = omax - k
-                out[k, j] += Wx[i, j] * const[i]
+    pass
 
 
 @jit(nopython=True, cache=True)
 def _ssq_cwt_log(Wx, dWx, out, const, gamma, vlmin, dvl, omax, flipud=False):
-    for i in range(Wx.shape[0]):
-        for j in range(Wx.shape[1]):
-            if abs(Wx[i, j]) > gamma:
-                A, B = dWx[i, j].real, dWx[i, j].imag
-                C, D = Wx[i, j].real,  Wx[i, j].imag
-                w_ij = abs((B*C - A*D) / ((C**2 + D**2) * 6.283185307179586))
-
-                k = int(min(round(max((np.log2(w_ij) - vlmin) / dvl, 0)), omax))
-                if flipud:
-                    k = omax - k
-                out[k, j] += Wx[i, j] * const[i]
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def _ssq_cwt_log_par(Wx, dWx, out, const, gamma, vlmin, dvl, omax, flipud=False):
-    for j in prange(Wx.shape[1]):
-        for i in range(Wx.shape[0]):
-            if abs(Wx[i, j]) > gamma:
-                A, B = dWx[i, j].real, dWx[i, j].imag
-                C, D = Wx[i, j].real,  Wx[i, j].imag
-                w_ij = abs((B*C - A*D) / ((C**2 + D**2) * 6.283185307179586))
-
-                k = int(min(round(max((np.log2(w_ij) - vlmin) / dvl, 0)), omax))
-                if flipud:
-                    k = omax - k
-                out[k, j] += Wx[i, j] * const[i]
+    pass
 
 
 @jit(nopython=True, cache=True)
 def _ssq_cwt_lin(Wx, dWx, out, const, gamma, vmin, dv, omax, flipud=False):
-    for i in range(Wx.shape[0]):
-        for j in range(Wx.shape[1]):
-            if abs(Wx[i, j]) > gamma:
-                A, B = dWx[i, j].real, dWx[i, j].imag
-                C, D = Wx[i, j].real,  Wx[i, j].imag
-                w_ij = abs((B*C - A*D) / ((C**2 + D**2) * 6.283185307179586))
-
-                k = int(min(round(max((w_ij - vmin) / dv, 0)), omax))
-                if flipud:
-                    k = omax - k
-                out[k, j] += Wx[i, j] * const[i]
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def _ssq_cwt_lin_par(Wx, dWx, out, const, gamma, vmin, dv, omax, flipud=False):
-    for j in prange(Wx.shape[1]):
-        for i in range(Wx.shape[0]):
-            if abs(Wx[i, j]) > gamma:
-                A, B = dWx[i, j].real, dWx[i, j].imag
-                C, D = Wx[i, j].real,  Wx[i, j].imag
-                w_ij = abs((B*C - A*D) / ((C**2 + D**2) * 6.283185307179586))
-
-                k = int(min(round(max((w_ij - vmin) / dv, 0)), omax))
-                if flipud:
-                    k = omax - k
-                out[k, j] += Wx[i, j] * const[i]
+    pass
 
 
 @jit(nopython=True, cache=True)
@@ -970,18 +765,7 @@ def _ssq_stft(Wx, dWx, Sfs, out, const, gamma, vmin, dv, omax, flipud=False):
 
 @jit(nopython=True, cache=True, parallel=True)
 def _ssq_stft_par(Wx, dWx, Sfs, out, const, gamma, vmin, dv, omax, flipud=False):
-    for j in prange(Wx.shape[1]):
-        for i in range(Wx.shape[0]):
-            if abs(Wx[i, j]) > gamma:
-                A, B = dWx[i, j].real, dWx[i, j].imag
-                C, D = Wx[i, j].real,  Wx[i, j].imag
-                w_ij = abs(
-                    Sfs[i] - (B*C - A*D) / ((C**2 + D**2) * 6.283185307179586))
-
-                k = int(min(round(max((w_ij - vmin) / dv, 0)), omax))
-                if flipud:
-                    k = omax - k
-                out[k, j] += Wx[i, j] * const[i]
+    pass
 
 
 #### CPU funcs & GPU kernel codes ############################################

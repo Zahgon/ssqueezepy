@@ -135,22 +135,16 @@ class FFT():
     @property
     def threads(self):
         """Set dynamically if `threads` wasn't passed in __init__."""
-        if self._user_threads is None:
-            return (multiprocessing.cpu_count() if IS_PARALLEL() else 1)
-        return self._user_threads
+        pass
 
     @property
     def patience(self):
         """Setter will also set `planning_timelimit` if setting to tuple."""
-        return self._patience
+        pass
 
     @patience.setter
     def patience(self, value):
-        self._validate_patience(value)
-        if isinstance(value, tuple):
-            self._patience, self.planning_timelimit = value
-        else:
-            self._patience = value
+        pass
 
     #### Main methods #########################################################
     def fft(self, x, axis=-1, patience=None, astensor=False):
@@ -315,12 +309,7 @@ class FFT():
 
     #### Misc #################################################################
     def load_wisdom(self):
-        for name in ('wisdom32', 'wisdom64'):
-            path = getattr(self, f"_{name}_path")
-            if Path(path).is_file():
-                with open(path, 'rb') as f:
-                    setattr(self, f"_{name}", f.read())
-        pyfftw.import_wisdom((self._wisdom64, self._wisdom32, b''))
+        pass
 
     def save_wisdom(self):
         """Will overwrite."""

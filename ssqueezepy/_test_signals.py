@@ -156,36 +156,19 @@ class TestSignals():
     #### test signals ########################################################
     def _maybe_warn_alias(self, phi, tol=.02):
         # allow non-trivial overshoot as it may occur but not worth warning
-        if self.warn_alias:
-            fmax = np.diff(phi).max()
-            if (fmax - np.pi) > tol:
-                WARN("`%s` has aliased w/ max(diff(phi))=%.6f>%.6f" % (
-                    inspect.stack()[2][3], fmax, pi))
+        pass
 
     def sine(self, N=None, f=1, phi0=0, **tkw):
         """sin(2pi*f*t + phi)"""
-        tkw['endpoint'] = tkw.get('endpoint', False)
-        t, *_ = self._process_params(N, tkw)
-
-        phi = 2*pi * f * t + phi0
-        self._maybe_warn_alias(phi)
-        return np.sin(phi), t
+        pass
 
     def cosine(self, N=None, f=1, phi0=0, **tkw):
         """cos(2pi*f*t + phi)"""
-        tkw['endpoint'] = tkw.get('endpoint', False)
-        t, *_ = self._process_params(N, tkw)
-
-        phi = 2*pi * f * t + phi0
-        self._maybe_warn_alias(phi)
-        return np.cos(phi), t
+        pass
 
     def _generate(self, fn, N, fmin, fmax, **tkw):
         """Used by chirps."""
-        t, tmin, tmax, fmax = self._process_params(N, tkw, fn, fmin, fmax)
-        phi = fn(t, tmin, tmax, fmin, fmax)
-        self._maybe_warn_alias(phi)
-        return np.cos(phi), t
+        pass
 
     def lchirp(self, N=None, fmin=0, fmax=None, **tkw):
         """
@@ -194,18 +177,10 @@ class TestSignals():
         >>> a = (fmin - fmax) / (tmin - tmax)
             b = (fmin*tmax - fmax*tmin) / (tmax - tmin)
         """
-        return self._generate(self._lchirp_fn, N, fmin, fmax, **tkw)
+        pass
 
     def _lchirp_fn(self, t, tmin, tmax, fmin, fmax, get_w=False):
-        a = (fmin - fmax) / (tmin - tmax)
-        b = (fmin*tmax - fmax*tmin) / (tmax - tmin)
-
-        phi = (a/2)*(t**2 - tmin**2) + b*(t - tmin)
-        phi *= (2*pi)
-        if get_w:
-            w = a*t + b
-            w *= (2*pi)
-        return (phi, w) if get_w else phi
+        pass
 
     def echirp(self, N=None, fmin=1, fmax=None, **tkw):
         """
@@ -214,18 +189,10 @@ class TestSignals():
         >>> a = (fmin^tmax / fmax^tmin) ^ 1/(tmax - tmin)
             b = fmax^(1/tmax) * (1/a)^(1/tmax)
         """
-        return self._generate(self._echirp_fn, N, fmin, fmax, **tkw)
+        pass
 
     def _echirp_fn(self, t, tmin, tmax, fmin, fmax, get_w=False):
-        a = (fmin**tmax / fmax**tmin) ** (1/(tmax - tmin))
-        b = fmax**(1/tmax) * (1/a)**(1/tmax)
-
-        phi = (a/np.log(b)) * (b**t - b**tmin)
-        phi *= (2*pi)
-        if get_w:
-            w = a*b**t
-            w *= (2*pi)
-        return (phi, w) if get_w else phi
+        pass
 
     def echirp_pc(self, N=None, fmin=0, fmax=None, **tkw):
         """Alternate design that keeps f'(t) fixed at `e`, but is no longer
@@ -236,19 +203,10 @@ class TestSignals():
         >>> a = (fmax - fmin)/(exp(tmax) - exp(tmin))
             b = (fmin*exp(tmax) - fmax*exp(tmin)) / (exp(tmax) - exp(tmin))
         """
-        return self._generate(self._echirp_pc_fn, N, fmin, fmax, **tkw)
+        pass
 
     def _echirp_pc_fn(self, t, tmin, tmax, fmin, fmax, get_w=False):
-        a, b, c, d = fmin, fmax, tmin, tmax
-        A = (b - a) / (np.exp(d) - np.exp(c))
-        B = (a*np.exp(d) - b*np.exp(c)) / (np.exp(d) - np.exp(c))
-
-        phi = A*(np.exp(t) - np.exp(tmin)) + B*(t - tmin)
-        phi *= (2*pi)
-        if get_w:
-            w = A*np.exp(t) + B
-            w *= (2*pi)
-        return (phi, w) if get_w else phi
+        pass
 
     def hchirp(self, N=None, fmin=.1, fmax=None, **tkw):
         """
@@ -261,167 +219,58 @@ class TestSignals():
             BN = sqrt(a^3*b^3*(c-d)^4) + a^2*b*c*(c-d) + a*b^2*d*(d - c)
             BD = a*b*(a - b)*(c - d)
         """
-        return self._generate(self._hchirp_fn, N, fmin, fmax, **tkw)
+        pass
 
     def _hchirp_fn(self, t, tmin, tmax, fmin, fmax, get_w=False):
-        a, b, c, d = fmin, fmax, tmin, tmax
-
-        AN = (2*np.sqrt(a**3*b**3*(c - d)**4) + a**2*b*(c - d)**2
-              + a*b**2*(c - d)**2)
-        AD = (a - b)**2
-        BN = np.sqrt(a**3*b**3*(c - d)**4) + a**2*b*c*(c - d) + a*b**2*d*(d - c)
-        BD = a*b*(a - b)*(c - d)
-        A = AN / AD
-        B = BN / BD
-
-        phi = A * (1/(B - t) + 1/(tmin - B))
-        phi *= (2*pi)
-        if get_w:
-            w = A / (B - t)**2
-            w *= (2*pi)
-        return (phi, w) if get_w else phi
+        pass
 
     def par_lchirp(self, N=None, fmin1=None, fmax1=None, fmin2=None, fmax2=None,
                    **tkw):
         """Linear frequency modulation in parallel. Should have
         `fmax2 > fmax1`, `fmin2 > fmin1`, and shared `tmin`, `tmax`.
         """
-        N = N or self.N
-        fdiff_default = N/10
-
-        if fmin1 is None:
-            fmin1 = self.default_args['lchirp'].get('fmin', 0)
-        if fmin2 is None:
-            fmin2 = fmin1 + fdiff_default
-        if fmax2 is None or fmax1 is None:
-            if fmax1 is None:
-                fmax2 = N/2
-                fmax1 = fmax2 - fdiff_default
-            else:
-                fmax2 = min(N/2, fmax1 + fdiff_default)
-
-        x1, t = self.lchirp(N, fmin1, fmax1, **tkw)
-        x2, _ = self.lchirp(N, fmin2, fmax2, **tkw)
-        x = x1 + x2
-        return x, t
+        pass
 
     def par_echirp(self, N=None, fmin1=None, fmax1=None, fmin2=None, fmax2=None,
                    **tkw):
         """Exponential frequency modulation in parallel. Should have
         `fmax2 > fmax1`, `fmin2 > fmin1`, and shared `tmin`, `tmax`.
         """
-        N = N or self.N
-        fratio_default = 1.5
-
-        if fmin1 is None:
-            fmin1 = self.default_args['echirp'].get('fmin', 1)
-        if fmin2 is None:
-            fmin2 = fmin1 * fratio_default
-        if fmax2 is None or fmax1 is None:
-            if fmax1 is None:
-                fmax2 = N/2
-                fmax1 = fmax2 / fratio_default
-            else:
-                fmax2 = min(N/2, fmax1 * fratio_default)
-
-        x1, t = self.echirp(N, fmin1, fmax1, **tkw)
-        x2, _ = self.echirp(N, fmin2, fmax2, **tkw)
-        x = x1 + x2
-        return x, t
+        pass
 
     def par_hchirp(self, N=None, fmin1=None, fmax1=None, fmin2=None, fmax2=None,
                    **tkw):
         """Hyperbolic frequency modulation in parallel. Should have
         `fmax2 > fmax1`, `fmin2 > fmin1`, and shared `tmin`, `tmax`.
         """
-        N = N or self.N
-        fratio_default = 3
-
-        if fmin1 is None:
-            fmin1 = self.default_args['hchirp'].get('fmin', 1)
-        if fmin2 is None:
-            fmin2 = fmin1 * fratio_default
-        if fmax2 is None or fmax1 is None:
-            if fmax1 is None:
-                fmax2 = N/2
-                fmax1 = fmax2 / fratio_default
-            else:
-                fmax2 = min(N/2, fmax1 * fratio_default)
-
-        x1, t = self.hchirp(N, fmin1, fmax1, **tkw)
-        x2, _ = self.hchirp(N, fmin2, fmax2, **tkw)
-        x = x1 + x2
-        return x, t
+        pass
 
     def am_sine(self, N=None, f=1, amin=0, amax=1, phi=0, **tkw):
         """Sine amplitude modulation, `|sin(w) + 1| / 2`."""
-        N = N or self.N
-        _A, t = self.sine(N, f, phi, **tkw)
-        _A = (_A + 1) / 2
-        return amin + (amax - amin) * _A, t
+        pass
 
     def am_cosine(self, N=None, f=1, amin=0, amax=1, phi=0, **tkw):
         """Cosine amplitude modulation, `|cos(w) + 1| / 2`."""
-        N = N or self.N
-        _A, t = self.cosine(N, f, phi, **tkw)
-        _A = (_A + 1) / 2
-        return amin + (amax - amin) * _A, t
+        pass
 
     def am_exp(self, N=None, amin=.1, amax=1, **tkw):
         """Uses `echirp`'s expression for `f(t)`."""
-        N = N or self.N
-        t, tmin, tmax = self._process_params(N, tkw)
-        _A = self._echirp_fn(t, tmin, tmax, amin, amax, get_w=True)[1]
-        _A /= (2*pi)
-        return _A, t
+        pass
 
     def am_gauss(self, N=None, amin=.1, amax=1, **tkw):
         """Gaussian centered at center sample (`N/2`)."""
-        N = N or self.N
-        t = _t(-1, 1, N)
-        _A = np.exp( -((t - t.mean())**2 * 5) )
-        return amin + (amax - amin)*_A, t
+        pass
 
     def jumps(self, N=None, freqs=None, **tkw):
         """Large instant freq transitions, e.g. `cos(2pi f*t), f=2 -> f=100`."""
-        N = N or self.N
-        t, tmin, tmax = self._process_params(N, tkw)
-
-        n_freqs = len(freqs) if freqs is not None else 4
-        M = N // n_freqs
-        if freqs is None:
-            freqs = [1, M/4, M/2, M/16]
-
-        tdiff = tmax - tmin
-        x_freqs = []
-        endpoint = tkw.get('endpoint', self.default_tkw.get('endpoint', False))
-
-        t_all = _t(tmin, tdiff * len(freqs), M * len(freqs), endpoint)
-        for i, f in enumerate(freqs):
-            t = t_all[i*M : (i+1)*M]
-            x_freqs.append(np.cos(2*pi * f * t))
-        x, t = np.hstack(x_freqs), t_all
-
-        return x, t
+        pass
 
     def packed(self, N=None, freqs=None, overlap=.8, **tkw):
         """Closely-spaced bands of sinusoids with majority overlap, e.g.
             `cos(w*t[No:]) + cos((w+1)*t[-No:]) + cos((w+3)*t[No:]) + ...`,
             `No = .8*len(t)`.
         """
-        N = N or self.N
-        t, *_ = self._process_params(N, tkw)
-        if freqs is None:
-            freqs = [.5, 1, 2, N/10, N/10 + N/50, N/10 + N/25,
-                     N/5, N/4, N/3, N/3 + N/10]
-        N_overlap = int(overlap*len(t))
-
-        x = np.zeros(len(t))
-        for i, f in enumerate(freqs):
-            idxs = (slice(0, N_overlap) if (i % 2 == 0) else
-                    slice(-N_overlap, None))
-            x[idxs] += np.cos(2*pi * f * t[idxs])
-        return x, t
+        pass
 
     def packed_poly(self, N=None, **tkw):
         """Closely-packed polynomial frequency modulations (non-configurable;
@@ -429,37 +278,13 @@ class TestSignals():
 
         Generates https://www.desmos.com/calculator/swbhgezpjk with A.M.
         """
-        N = N or self.N
-        t = np.linspace(0, 10, N)
-
-        k1, k2, k3 = 10, 2.4, 4.8  # offsets
-        adj = N / 512  # keep FMs around same part of time-freq plane
-        k1, k2, k3 = k1*adj, k2*adj, k3*adj
-
-        x1 = (1 + .3 * np.cos(t)
-              ) * np.cos(2*np.pi * (k1*t - 0.3*adj*np.sin(t) - 1.8*adj*t**1.5))
-        x2 = (1 + .2 * np.cos(2*t)) * np.exp(-t/15) * np.cos(
-            2*np.pi * (k2*t + 0.5*adj*t**1.2 + .3*np.sin(t)))
-        x3 = np.cos(2*np.pi * (k3*t + .2*adj*t**1.3))
-
-        x = x1 + x2 + x3
-        return x, t
+        pass
 
     def poly_cubic(self, N=None, **tkw):
         """Cubic polynomial frequency variation + pure tone (non-configurable;
         adjusts with N to keep bands approx unmoved in time-frequency plane).
         """
-        N = N or self.N
-        t  = np.linspace(0, 10, N, endpoint=True)
-
-        p1 = np.poly1d([0.025, -0.36, 1.25, 2.0]) * (N / 256)
-        p3 = np.poly1d([0.01, -0.25, 1.5, 4.0]) * (N / 256)
-        x1 = sig.sweep_poly(t, p1)
-        x3 = sig.sweep_poly(t, p3)
-        x2 = np.sin(2*np.pi * (.5*N/256) * t)
-
-        x = x1 + x2 + x3
-        return x, t
+        pass
 
     #### Test functions ######################################################
     def demo(self, signals='all', N=None, dft=None):
@@ -481,22 +306,7 @@ class TestSignals():
                 If not None, will also plot DFT of each signal along the signal.
                 If `'cols'`, will stack horizontally - if `'rows'`, vertically.
         """
-        data = self.make_signals(signals, N, get_params=True)
-        if dft not in (None, 'rows', 'cols'):
-            raise ValueError(f"`dft` must be 'rows', 'cols', or None (got {dft})")
-        elif dft == 'cols':
-            dft_kw = dict(ncols=2, h=.55, w=1)
-        elif dft == 'rows':
-            dft_kw = dict(nrows=2)
-
-        for name, (x, t, (fparams, aparams)) in data.items():
-            title = self._title(name, len(x), fparams, aparams)
-            if dft:
-                axrf = np.abs(rfft(x))
-                pkw = [{'title': title}, {'title': f"rDFT({name})"}]
-                plots([t, None], [x, axrf], pkw=pkw, show=1, **dft_kw)
-            else:
-                plot(t, x, show=1, title=title)
+        pass
 
     def test_transforms(self, fn, signals='all', N=None):
         """Make `fn` return `None` to skip visuals (e.g. if already done by `fn`).
@@ -510,23 +320,7 @@ class TestSignals():
         Also see `help(ssqueezepy._test_signals)`, and
         `help(TestSignals.make_signals)`.
         """
-        data = self.make_signals(signals, N, get_params=True)
-        default_pkw = dict(abs=1, show=1)
-
-        for name, (x, t, (fparams, aparams)) in data.items():
-            out = fn(x, t, (name, fparams, aparams))
-
-            if out is not None:
-                out, pkw = out
-                default_pkw['title'] = self._title(name, len(x), fparams, aparams)
-                for k, v in default_pkw.items():
-                    pkw[k] = pkw.get(k, v)
-
-                if isinstance(out, (tuple, list)):
-                    for o in out:
-                        imshow(o, **pkw)
-                else:
-                    imshow(out, **pkw)
+        pass
 
     #### utils ###############################################################
     def make_signals(self, signals='all', N=None, get_params=False):
@@ -542,107 +336,18 @@ class TestSignals():
 
         Also see `help(ssqueezepy._test_signals)`.
         """
-        def _process_args(name, fparams, aparams):
-            fname, aname = (name.split(':') if ':' in name else
-                            (name, ''))
-            fname, aname = fname.replace('-', '_'), aname.replace('-', '_')
-            fname = fname.lstrip('#')  # in case present
-
-            fn  = (getattr(self, fname) if fname else
-                   lambda *args, **kw: (np.ones(args[0]), None))
-            afn = (getattr(self, aname) if aname else
-                   lambda *args, **kw: (np.ones(args[0]), None))
-
-            tkw = {}
-            for dc in (fparams, aparams):  # `aparams` take precedence
-                for k, v in dc.items():
-                    if k in ('tmin', 'tmax', 'endpoint'):
-                        tkw[k] = v
-            return fn, afn, fname, aname, tkw
-
-        names, params_all = self._process_input(signals)
-
-        data = {}
-        for name, (fparams, aparams) in zip(names, params_all):
-            fn, afn, *_, tkw = _process_args(name, fparams, aparams)
-            snr = fparams.pop('snr', self.snr)
-
-            x, t = fn(N, **fparams)
-            x *= afn(len(x), **aparams, **tkw)[0]
-
-            if name[0] == '#':
-                x += x[::-1]
-            if snr:
-                noise_var = x.var() / 10**(snr/10)
-                if self.seed is not None:
-                    np.random.seed(self.seed)
-                noise = np.sqrt(noise_var) * np.random.randn(len(x))
-                # use actual values
-                fparams['snr'] = 10*np.log10(x.var() / noise.var())
-
-                x += noise
-
-            data[name] = (x, t, (fparams, aparams))
-
-        if not get_params:
-            data = [d[0] for d in data.values()]
-            if len(data) == 1:
-                data = data[0]
-        return data
+        pass
 
     @classmethod
     def _title(self, signal, N, fparams, aparams, x=None, wrap_len=70):
-        fparams = self._process_varname_alias(signal, N, fparams)
-        snr = fparams.pop('snr', None)
-
-        if snr:
-            snr = "{:.1f}dB".format(snr)
-            fparams = dict(N=N, SNR=snr, **fparams)
-        else:
-            fparams = dict(N=N, **fparams)
-        # drop `.0` from integer floats
-        fparams = {k: (int(v) if (isinstance(v, float) and v.is_integer()) else v)
-                   for k, v in fparams.items()}
-
-        ptxt = ', '.join(f"{k}={v}" for k, v in fparams.items())
-        title = "{} | {}".format(signal, ptxt)
-
-        if aparams:
-            atxt = ', '.join(f"{k}={v}" for k, v in aparams.items())
-            title += ', %s' % atxt
-
-        title = _textwrap(title, wrap_len)
-        return title
+        pass
 
     @staticmethod
     def _process_varname_alias(signal, N, fparams):
-        fparams = fparams.copy()
-        for k, v in fparams.items():
-            if (k == 'fmax' and v is None and
-                    any(s in signal for s in ('lchirp', 'echirp', 'hchirp'))):
-                fparams['fmax'] = N / 2
-        return fparams
+        pass
 
     def _process_params(self, N, tkw, fn=None, fmin=None, fmax=None):
-        tkw = tkw.copy()
-        for k in self.default_tkw:
-            tkw[k] = tkw.get(k, self.default_tkw[k])
-
-        if N is None:
-            tmin, tmax = tkw['tmin'], tkw['tmax']
-            if any(var is None for var in (tmin, tmax, fmin, fmax)):
-                N = self.N
-            else:
-                f_fn = lambda *args, **kw: fn(*args, **kw, get_w=True)[1]
-                N = self._est_N_nonalias(f_fn, tmin, tmax, fmin, fmax)
-
-        if fmax is None:
-            fmax = N // 2
-
-        t = _t(**tkw, N=N)
-        tmin, tmax = tkw['tmin'], tkw['tmax']
-        return ((t, tmin, tmax, fmax) if fn else
-                (t, tmin, tmax))
+        pass
 
     def _est_N_nonalias(self, f_fn, tmin, tmax, fmin, fmax):
         """Find smallest `N` (number of samples) such that signal generated
@@ -656,12 +361,7 @@ class TestSignals():
         fmax_fn * (tmax - tmin) / (N - 1) = pi
         1 + fmax_fn * (tmax - tmin) / pi = N
         """
-        # sample sufficiently finely
-        t = np.linspace(tmin, tmax, 50000, endpoint=True)
-        fmax_fn = np.max(f_fn(t, tmin, tmax, fmin, fmax))
-
-        min_nonalias_N = int(np.ceil(1 + fmax_fn*(tmax - tmin)/pi))
-        return min_nonalias_N
+        pass
 
     def _process_input(self, signals):
         """
@@ -787,50 +487,10 @@ class TestSignals():
         """Plots CWT & SSQ_CWT taken with `wavelets` wavelets side by side,
         vertically.
         """
-        if not isinstance(wavelets, (list, tuple)):
-            wavelets = [wavelets]
-        wavs = []
-        for wavelet in wavelets:
-            wavs.append(Wavelet._init_if_not_isinstance(wavelet))
-
-        fn = lambda x, t, params: self._wavcomp_fn(
-            x, t, params, wavelets, w=w, h=h, tight_kw=tight_kw)
-        self.test_transforms(fn, signals=signals, N=N)
+        pass
 
     def _wavcomp_fn(self, x, t, params, wavelets, w=1.2, h=None, tight_kw=None):
-        def _get_default_hspace():
-            """Set dims based on maximum number of rows titles occupy."""
-            title_nrows = []
-            for wavelet in wavelets:
-                name, fparams, aparams = params
-                title1, title2 = self._title_cwt(wavelet, name, x,
-                                                 fparams, aparams)
-                title_nrows.extend([title1.count('\n'), title2.count('\n')])
-
-            max_rows = max(title_nrows) + 1
-            return (.13 + .05*(max_rows - 2)) * (.9 / h)
-
-        h = h or .45 * len(wavelets)
-        fig, axes = plt.subplots(len(wavelets), 2, figsize=(w * 12, h * 12))
-
-        for i, wavelet in enumerate(wavelets):
-            Tx, Wx, *_ = ssq_cwt(x, wavelet, t=t, flipud=1, astensor=False)
-
-            name, fparams, aparams = params
-            title1, title2 = self._title_cwt(wavelet, name, x, fparams, aparams)
-
-            pkw = dict(abs=1, ticks=0, fig=fig)
-            imshow(Wx, **pkw, ax=axes[i, 0], show=0, title=title1)
-            imshow(Tx, **pkw, ax=axes[i, 1], show=0, title=title2)
-
-        tight_kw = tight_kw or {}
-        default_hspace = _get_default_hspace()
-        defaults = dict(left=0, right=1, bottom=0, top=1, wspace=.01,
-                        hspace=default_hspace)
-        for k, v in defaults.items():
-            tight_kw[k] = v
-        plt.subplots_adjust(**tight_kw)
-        plt.show()
+        pass
 
     def cwt_vs_stft(self, wavelet, window, signals='all', N=None,
                     win_len=None, n_fft=None, window_name=None, config_str='',
@@ -842,83 +502,21 @@ class TestSignals():
         control plots' width & height. `tight_kw` is passed to
         `plt.subplots_adjust()`.
         """
-        fn = lambda x, t, params: self._cwt_vs_stft_fn(
-            x, t, params, wavelet, window, win_len, n_fft, window_name,
-            config_str, w, h, tight_kw)
-        self.test_transforms(fn, signals=signals, N=N)
+        pass
 
     def _cwt_vs_stft_fn(self, x, t, params, wavelet, window, win_len=None,
                         n_fft=None, window_name=None, config_str='', w=1.2, h=.9,
                         tight_kw=None):
-        def _get_default_hspace():
-            """Set dims based on maximum number of rows titles occupy."""
-            max_rows = 1 + max(g.count('\n') for g in (ctitle1, ctitle2,
-                                                       stitle1, stitle2))
-            return (.13 + .05*(max_rows - 2)) * (.9 / h)
-
-        fs = 1 / (t[1] - t[0])
-        Tsx, Sx, *_ = ssq_stft(x, window, n_fft=n_fft, win_len=win_len, fs=fs,
-                               astensor=False)
-        Twx, Wx, *_ = ssq_cwt(x, wavelet, t=t, flipud=1, astensor=False)
-        Tsx, Sx = np.flipud(Tsx), np.flipud(Sx)
-
-        name, fparams, aparams = params
-        ctitle1, ctitle2 = self._title_cwt( wavelet, name, x, fparams, aparams)
-        stitle1, stitle2 = self._title_stft(window,  name, x, fparams, aparams,
-                                            win_len, n_fft, window_name,
-                                            config_str)
-
-        fig, axes = plt.subplots(2, 2, figsize=(w * 12, h * 12))
-
-        pkw = dict(abs=1, ticks=0, fig=fig)
-        imshow(Wx,  **pkw, ax=axes[0, 0], show=0, title=ctitle1)
-        imshow(Twx, **pkw, ax=axes[0, 1], show=0, title=ctitle2)
-        imshow(Sx,  **pkw, ax=axes[1, 0], show=0, title=stitle1)
-        norm = ((0, np.abs(Tsx).mean()*300) if ("packed-poly" in name)
-                else None)
-        norm = ((0, np.abs(Tsx).mean()*200) if ("#par-lchirp" in name)
-                else norm)
-        imshow(Tsx, **pkw, ax=axes[1, 1], show=0, title=stitle2, norm=norm)
-
-        tight_kw = tight_kw or {}
-        default_hspace = _get_default_hspace()
-        defaults = dict(left=0, right=1, bottom=0, top=1, wspace=.01,
-                        hspace=default_hspace)
-        for k, v in defaults.items():
-            tight_kw[k] = v
-        plt.subplots_adjust(**tight_kw)
-        plt.show()
+        pass
 
     @staticmethod
     def _title_cwt(wavelet, name, x, fparams, aparams, wrap_len=53):
-        title = TestSignals._title(name, len(x), fparams, aparams)
-
-        # special case: GMW
-        wname = wavelet.name.replace(' L1', '').replace(' L2', '')
-
-        twav = '%s wavelet | %s' % (wname, wavelet.config_str)
-        ctitle1 = title + '\nabs(CWT) | ' + twav
-        ctitle2 = 'abs(SSQ_CWT)'
-
-        ctitle1 = _textwrap(ctitle1, wrap_len)
-        return ctitle1, ctitle2
+        pass
 
     @staticmethod
     def _title_stft(window, name, x, fparams, aparams, win_len=None, n_fft=None,
                     window_name='', config_str='', wrap_len=53):
-        title = TestSignals._title(name, len(x), fparams, aparams)
-
-        if win_len is not None:
-            twin = "{} window | win_len={}, n_fft={}, {}".format(
-                window_name, win_len, n_fft, config_str)
-        else:
-            twin = "{} window | n_fft={}, {}".format(window_name, n_fft,
-                                                     config_str)
-        stitle1 = title + '\nabs(STFT) | ' + twin
-        stitle2 = 'abs(SSQ_STFT)'
-
-        stitle1 = _textwrap(stitle1, wrap_len)
-        return stitle1, stitle2
+        pass
 
     def ridgecomp(self, signals='all', N=None, penalty=20, n_ridges=2, bw=None,
                   transform='cwt', w=1.2, h=.4, **transform_kw):
@@ -928,54 +526,12 @@ class TestSignals():
 
         See `help(ridge_extraction.extract_ridges)`.
         """
-        fn = lambda x, t, params: self._ridgecomp_fn(
-            x, t, params, penalty, n_ridges, bw, transform,
-            **transform_kw)
-        self.test_transforms(fn, signals=signals, N=N)
+        pass
 
     def _ridgecomp_fn(self, x, t, params, penalty=20, n_ridges=2, bw=None,
                       transform='cwt', w=1.2, h=.4, **transform_kw):
-        transform_fn = ssq_cwt if transform == 'cwt' else ssq_stft
-        transform_kw = transform_kw.copy()
-        transform_kw['astensor'] = False
-        Tfs, Tf, ssq_freqs, scales, *_ = transform_fn(x, t=t, **transform_kw)
-
-        if bw is None:
-            tf_bw, ssq_bw = 10, 2
-        elif isinstance(bw, tuple):
-            tf_bw, ssq_bw = bw
-        else:
-            tf_bw = ssq_bw = bw
-        rkw = dict(penalty=penalty, n_ridges=n_ridges, transform=transform)
-        ridges     = extract_ridges(Tf,  scales,    bw=tf_bw,  **rkw)
-        ssq_ridges = extract_ridges(Tfs, ssq_freqs, bw=ssq_bw, **rkw)
-
-        name, fparams, aparams = params
-        if transform == 'cwt':
-            Tf = np.flipud(Tf)
-            ridges = len(Tf) - ridges
-            title, title_s = "abs(CWT) w/ ridges", "abs(SSQ_CWT) w/ ridges"
-        else:
-            title, title_s = "abs(STFT) w/ ridges", "abs(SSQ_STFT) w/ ridges"
-        tridge = "\npenalty={}, n_ridges={}, tf_bw={}, ssq_bw={}".format(
-            penalty, n_ridges, tf_bw, ssq_bw)
-        title += tridge
-        tbase = self._title(name, len(x), fparams, aparams)
-        title = tbase + '\n' + title
-
-        _, axes = plt.subplots(1, 2, figsize=(w * 12, h * 12))
-
-        pkw = dict(color='k', linestyle='--', ylims=(0, len(Tf)),
-                   xlims=(0, Tf.shape[1]), ticks=0)
-        plot(ridges,     ax=axes[0], **pkw)
-        imshow(Tf,  abs=1, title=title,   ax=axes[0], show=0)
-        plot(ssq_ridges, ax=axes[1], **pkw)
-        imshow(Tfs, abs=1, title=title_s, ax=axes[1], show=0)
-
-        tight_kw = dict(left=0, right=1, bottom=0, top=1, wspace=.01, hspace=0)
-        plt.subplots_adjust(**tight_kw)
-        plt.show()
+        pass
 
 
 def _t(tmin, tmax, N, endpoint=False):
-    return np.linspace(tmin, tmax, N, endpoint=endpoint)
+    pass

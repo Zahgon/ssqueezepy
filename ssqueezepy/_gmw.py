@@ -188,179 +188,76 @@ def gmw_l1(gamma=3., beta=60., centered_scale=False, dtype='float64'):
     """Generalized Morse Wavelets, first order, L1(bandpass)-normalized.
     See `help(_gmw.gmw)`.
     """
-    _check_args(gamma=gamma, beta=beta, allow_zerobeta=False)
-    wc = morsefreq(gamma, beta)
-
-    wcl = np.log(wc)
-    gamma, beta, wc, wcl = _process_params_dtype(gamma, beta, wc, wcl, dtype=dtype)
-
-    fn = _gmw_l1_gpu if USE_GPU() else (_gmw_l1_par if IS_PARALLEL() else _gmw_l1)
-    if centered_scale:
-        return lambda w: fn(S.atleast_1d(w * wc, dtype), gamma, beta, wc, wcl)
-    else:
-        return lambda w: fn(S.atleast_1d(w, dtype), gamma, beta, wc, wcl)
+    pass
 
 @jit(nopython=True, cache=True)
 def _gmw_l1(w, gamma, beta, wc, wcl):
     # NOTE: numba.jit, unlike numpy & torch, will promote to float64 with
     # array float32 and scalar float64
-    w_nonneg = (w >= 0)
-    w *= w_nonneg  # zero negative `w` to avoid nans
-    return 2 * np.exp(- beta * wcl + wc**gamma
-                      + beta * np.log(w) - w**gamma) * w_nonneg
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def _gmw_l1_par(w, gamma, beta, wc, wcl):
     # NOTE: numba.jit, unlike numpy & torch, will promote to float64 with
     # array float32 and scalar float64
-    w_nonneg = (w >= 0)
-    w *= w_nonneg  # zero negative `w` to avoid nans
-    return 2 * np.exp(- beta * wcl + wc**gamma
-                      + beta * np.log(w) - w**gamma) * w_nonneg
+    pass
 
 def _gmw_l1_gpu(w, gamma, beta, wc, wcl):
-    w_nonneg = (w >= 0)
-    w *= w_nonneg
-    return 2 * torch.exp(- beta * wcl + wc**gamma
-                         + beta * torch.log(w) - w**gamma) * w_nonneg
+    pass
 
 
 def gmw_l2(gamma=3., beta=60., centered_scale=False, dtype='float64'):
     """Generalized Morse Wavelets, first order, L2(energy)-normalized.
     See `help(_gmw.gmw)`.
     """
-    _check_args(gamma=gamma, beta=beta, allow_zerobeta=False)
-    wc = morsefreq(gamma, beta)
-    r = (2*beta + 1) / gamma
-    rgamma = gamma_fn(r)
-    (gamma, beta, wc, r, rgamma
-     ) = _process_params_dtype(gamma, beta, wc, r, rgamma, dtype=dtype)
-
-    fn = _gmw_l2_gpu if USE_GPU() else (_gmw_l2_par if IS_PARALLEL() else _gmw_l2)
-    if centered_scale:
-        return lambda w: fn(S.atleast_1d(w * wc, dtype), gamma, beta, wc,
-                            r, rgamma)
-    else:
-        return lambda w: fn(S.atleast_1d(w, dtype), gamma, beta, wc, r, rgamma)
+    pass
 
 @jit(nopython=True, cache=True)
 def _gmw_l2(w, gamma, beta, wc, r, rgamma):
-    w_nonneg = (w >= 0)
-    w *= w_nonneg  # zero negative `w` to avoid nans
-    return np.sqrt(2.*pi * gamma * 2.**r / rgamma
-                   ) * w**beta * np.exp(-w**gamma) * w_nonneg
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def _gmw_l2_par(w, gamma, beta, wc, r, rgamma):
-    w_nonneg = (w >= 0)
-    w *= w_nonneg  # zero negative `w` to avoid nans
-    return np.sqrt(2.*pi * gamma * 2.**r / rgamma
-                   ) * w**beta * np.exp(-w**gamma) * w_nonneg
+    pass
 
 def _gmw_l2_gpu(w, gamma, beta, wc, r, rgamma):
-    w_nonneg = (w >= 0)
-    w *= w_nonneg  # zero negative `w` to avoid nans
-    return torch.sqrt(2.*pi * gamma * 2.**r / rgamma
-                      ) * w**beta * torch.exp(-w**gamma) * w_nonneg
+    pass
 
 
 def gmw_l1_k(gamma=3., beta=60., k=1, centered_scale=False, dtype='float64'):
     """Generalized Morse Wavelets, `k`-th order, L1(bandpass)-normalized.
     See `help(_gmw.gmw)`.
     """
-    _check_args(gamma=gamma, beta=beta, allow_zerobeta=False)
-
-    wc = morsefreq(gamma, beta)
-    k_consts = _gmw_k_constants(gamma, beta, k, norm='bandpass', dtype=dtype)
-    gamma, beta, wc = _process_params_dtype(gamma, beta, wc, dtype=dtype)
-
-    fn = (_gmw_l1_k_gpu if USE_GPU() else
-          (_gmw_l1_k_par if IS_PARALLEL() else _gmw_l1_k))
-    if centered_scale:
-        return lambda w: fn(S.atleast_1d(w * wc, dtype), gamma, beta, wc,
-                            k_consts)
-    else:
-        return lambda w: fn(S.atleast_1d(w, dtype), gamma, beta, wc, k_consts)
+    pass
 
 @jit(nopython=True, cache=True)
 def _gmw_l1_k(w, gamma, beta, wc, k_consts):
-    w_nonneg = (w >= 0)
-    w *= w_nonneg  # zero negative `w` to avoid nans
-
-    C = np.zeros(w.shape, dtype=w.dtype)
-    for m in range(len(k_consts)):
-        C += k_consts[m] * (2*w**gamma)**m
-    return C * np.exp(- beta * np.log(wc) + wc**gamma
-                      + beta * np.log(w)  - w**gamma) * w_nonneg
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def _gmw_l1_k_par(w, gamma, beta, wc, k_consts):
-    w_nonneg = (w >= 0)
-    w *= w_nonneg  # zero negative `w` to avoid nans
-
-    C = np.zeros(w.shape, dtype=w.dtype)
-    for m in range(len(k_consts)):
-        C += k_consts[m] * (2*w**gamma)**m
-    return C * np.exp(- beta * np.log(wc) + wc**gamma
-                      + beta * np.log(w)  - w**gamma) * w_nonneg
+    pass
 
 def _gmw_l1_k_gpu(w, gamma, beta, wc, k_consts):
-    w_nonneg = (w >= 0)
-    w *= w_nonneg  # zero negative `w` to avoid nans
-
-    C = w.new_zeros(w.shape)
-    for m in range(len(k_consts)):
-        C += k_consts[m] * (2*w**gamma)**m
-    return C * torch.exp(- beta * torch.log(wc) + wc**gamma
-                         + beta * torch.log(w)  - w**gamma) * w_nonneg
+    pass
 
 
 def gmw_l2_k(gamma=3., beta=60., k=1, centered_scale=False, dtype='float64'):
     """Generalized Morse Wavelets, `k`-th order, L2(energy)-normalized.
     See `help(_gmw.gmw)`.
     """
-    _check_args(gamma=gamma, beta=beta, allow_zerobeta=False)
-
-    wc = morsefreq(gamma, beta)
-    k_consts = _gmw_k_constants(gamma, beta, k, norm='energy', dtype=dtype)
-    gamma, beta, wc = _process_params_dtype(gamma, beta, wc, dtype=dtype)
-
-    fn = (_gmw_l2_k_gpu if USE_GPU() else
-          (_gmw_l2_k_par if IS_PARALLEL() else _gmw_l2_k))
-    if centered_scale:
-        return lambda w: fn(S.atleast_1d(w * wc, dtype), gamma, beta, wc,
-                            k_consts)
-    else:
-        return lambda w: fn(S.atleast_1d(w, dtype), gamma, beta, wc, k_consts)
+    pass
 
 @jit(nopython=True, cache=True)
 def _gmw_l2_k(w, gamma, beta, wc, k_consts):
-    w_nonneg = (w >= 0)
-    w *= w_nonneg  # zero negative `w` to avoid nans
-
-    C = np.zeros(w.shape, dtype=w.dtype)
-    for m in range(len(k_consts)):
-        C += k_consts[m] * (2*w**gamma)**m
-    return C * np.exp(beta * np.log(w) - w**gamma) * w_nonneg
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def _gmw_l2_k_par(w, gamma, beta, wc, k_consts):
-    w_nonneg = (w >= 0)
-    w *= w_nonneg  # zero negative `w` to avoid nans
-
-    C = np.zeros(w.shape, dtype=w.dtype)
-    for m in range(len(k_consts)):
-        C += k_consts[m] * (2*w**gamma)**m
-    return C * np.exp(beta * np.log(w) - w**gamma) * w_nonneg
+    pass
 
 def _gmw_l2_k_gpu(w, gamma, beta, wc, k_consts):
-    w_nonneg = (w >= 0)
-    w *= w_nonneg  # zero negative `w` to avoid nans
-
-    C = w.new_zeros(w.shape)
-    for m in range(len(k_consts)):
-        C += k_consts[m] * (2*w**gamma)**m
-    return C * torch.exp(beta * torch.log(w) - w**gamma) * w_nonneg
+    pass
 
 
 def _gmw_k_constants(gamma, beta, k, norm='bandpass', dtype='float64'):
@@ -369,29 +266,7 @@ def _gmw_k_constants(gamma, beta, k, norm='bandpass', dtype='float64'):
     Higher-order GMWs are coded such that constants are pre-computed and reused
     for any `w` input, since they remain fixed for said order.
     """
-    r = (2 * beta + 1) / gamma
-    c = r - 1
-
-    # compute `coeff`
-    if norm == 'bandpass':
-        coeff = np.sqrt(np.exp(gammaln_fn(r) + gammaln_fn(k + 1) -
-                               gammaln_fn(k + r)))
-    elif norm == 'energy':
-        coeff = np.sqrt(2*pi * gamma * (2**r) *
-                        np.exp(gammaln_fn(k + 1) - gammaln_fn(k + r)))
-
-    # compute Laguerre polynomial constants
-    L_consts = np.zeros(k + 1, dtype=dtype)
-    for m in range(k + 1):
-        fact = np.exp(gammaln_fn(k + c + 1) - gammaln_fn(c + m + 1) -
-                      gammaln_fn(k - m + 1))
-        L_consts[m] = (-1)**m * fact / gamma_fn(m + 1)
-
-    k_consts = L_consts * coeff
-    if norm == 'bandpass':
-        k_consts *= 2
-    k_consts = k_consts.astype(dtype)
-    return k_consts
+    pass
 
 
 #### General order wavelets (any `K`) ########################################

@@ -270,10 +270,7 @@ def est_riskshrink_thresh(Wx, nv):
         https://github.com/ebrevdo/synchrosqueezing/blob/master/synchrosqueezing/
         est_riskshrink_thresh.m
     """
-    N = Wx.shape[1]
-    Wx_fine = np.abs(Wx[:nv])
-    gamma = 1.4826 * np.sqrt(2 * np.log(N)) * mad(Wx_fine)
-    return gamma
+    pass
 
 
 def find_closest_parallel_is_faster(shape, dtype='float32', trials=7, verbose=1):
@@ -296,7 +293,7 @@ def find_closest_parallel_is_faster(shape, dtype='float32', trials=7, verbose=1)
 
 def mad(data, axis=None):
     """Mean absolute deviation"""
-    return np.mean(np.abs(data - np.mean(data, axis)), axis)
+    pass
 
 
 def assert_is_one_of(x, name, supported, e=ValueError):

@@ -86,13 +86,7 @@ class Wavelet():
     @staticmethod
     def _halve_nyquist(psih):
         """https://github.com/jonathanlilly/jLab/issues/13"""
-        N = len(psih) if psih.ndim == 1 else psih.shape[1]
-        if N % 2 == 0:
-            if psih.ndim == 1:
-                psih[N//2] /= 2
-            else:
-                psih[:, N//2] /= 2
-        return psih
+        pass
 
     def psifn(self, w=None, *, scale=None, N=None):
         """Compute time-domain wavelet; simply `ifft(psih)` with appropriate
@@ -162,24 +156,22 @@ class Wavelet():
     @property
     def N(self):
         """Default value used when `N` is not passed to a `Wavelet` method."""
-        return self._N
+        pass
 
     @N.setter
     def N(self, value):
         """Ensure `xi` always matches `N`."""
-        self._N = value
-        self._xi = S.asarray(_xifn(scale=1, N=value,
-                                   dtype=getattr(np, self.dtype)))
+        pass
 
     @property
     def xi(self):
         """`xi` computed at `scale=1` and `N=self.N`. See `help(Wavelet.xifn)`."""
-        return self._xi
+        pass
 
     @property
     def dtype(self):
         """dtype at which psih and psi are generated; can't change post-init."""
-        return self._dtype
+        pass
 
     #### Properties ##########################################################
     @property
@@ -187,27 +179,12 @@ class Wavelet():
         """Name of underlying freq-domain function, processed by
         `wavelets._fn_to_name`.
         """
-        return _fn_to_name(self.fn)
+        pass
 
     @property
     def config_str(self):
         """`self.config` formatted into a nice string."""
-        if self.config:
-            cfg = ""
-            for k, v in self.config.items():
-                if k in ('norm', 'centered_scale', 'dtype'):
-                    # too long, no real need
-                    continue
-                elif k == 'order' and v == 0:
-                    # no need to include base wavelet's order
-                    continue
-                elif isinstance(v, float) and v.is_integer():
-                    v = int(v)
-                cfg += "{}={}, ".format(k, v)
-            cfg = cfg.rstrip(', ')
-        else:
-            cfg = "Default configs"
-        return cfg
+        pass
 
     @property
     def wc(self):
@@ -220,10 +197,7 @@ class Wavelet():
         Reported as "dimensional" in `info()` since it's tied to same `scale`
         used for computing `std_t_d` & `std_t_w`
         """
-        if getattr(self, '_wc', None) is None:
-            self._wc = center_frequency(self, scale=self.scalec_ct, N=self.N,
-                                        kind='energy')
-        return self._wc
+        pass
 
     @property
     def wc_ct(self):
@@ -233,66 +207,49 @@ class Wavelet():
 
         Reported as "nondimensional" in `info()` since it's scale-decoupled.
         """
-        if getattr(self, '_wc_ct', None) is None:
-            self._wc_ct = center_frequency(self, kind='peak-ct', N=self.N)
-        return self._wc_ct
+        pass
 
     @property
     def scalec_ct(self):
         """'Center scale' in sense of `wc_ct`, making wavelet peak at pi/4.
         See `help(Wavelet.wc_ct)`.
         """
-        if getattr(self, '_scalec_ct', None) is None:
-            self._scalec_ct = (4/pi) * self.wc_ct
-        return self._scalec_ct
+        pass
 
     @property
     def std_t(self):
         """Non-dimensional time resolution"""
-        if getattr(self, '_std_t', None) is None:
-            # scale=10 arbitrarily chosen to yield good compute-accurary
-            self._std_t = time_resolution(self, scale=self.scalec_ct, N=self.N,
-                                          nondim=True)
-        return self._std_t
+        pass
 
     @property
     def std_w(self):
         """Non-dimensional frequency resolution (radian)"""
-        if getattr(self, '_std_w', None) is None:
-            self._std_w = freq_resolution(self, scale=self.scalec_ct, N=self.N,
-                                          nondim=True)
-        return self._std_w
+        pass
 
     @property
     def std_f(self):
         """Non-dimensional frequency resolution (cyclic)"""
-        return self.std_w / (2*pi)
+        pass
 
     @property
     def harea(self):
         """Heisenberg area: std_t * std_w >= 0.5"""
-        return self.std_t * self.std_w
+        pass
 
     @property
     def std_t_d(self):
         """Dimensional time resolution [samples/(cycles*radians)]"""
-        if getattr(self, '_std_t_d', None) is None:
-            self._std_t_d = time_resolution(self, scale=self.scalec_ct, N=self.N,
-                                            nondim=False)
-        return self._std_t_d
+        pass
 
     @property
     def std_w_d(self):
         """Dimensional frequency resolution [(cycles*radians)/samples]"""
-        if getattr(self, '_std_w_d', None) is None:
-            self._std_w_d = freq_resolution(self, scale=self.scalec_ct, N=self.N,
-                                            nondim=False)
-        return self._std_w_d
+        pass
 
     @property
     def std_f_d(self):
         """Dimensional frequency resolution [cycles/samples]"""
-        return self.std_w_d / (2*pi)
+        pass
 
     #### Misc ################################################################
     def info(self, nondim=True, reset=False):
@@ -305,52 +262,17 @@ class Wavelet():
 
         Detailed overview: https://dsp.stackexchange.com/q/72042/50076
         """
-        if reset:
-            self.reset_properties()
-
-        if nondim:
-            cfg = self.config_str
-            dim_t = dim_w = "non-dimensional"
-            std_t, std_w = self.std_t, self.std_w
-            wc_txt = "wc_ct, (cycles*radians)"
-            wc = self.wc_ct
-        else:
-            cfg = self.config_str + " -- scale=%.2f" % self.scalec_ct
-            dim_t = "samples/(cycles*radians)"
-            dim_w = "(cycles*radians)/samples"
-            std_t, std_w = self.std_t_d, self.std_w_d
-            wc_txt = "wc,    (cycles*radians)/samples; %.2f" % self.scalec_ct
-            wc = self.wc
-        harea = std_t * std_w
-
-        print(("{} wavelet\n"
-               "\t{}\n"
-               "\tCenter frequency: {:<10.6f} [{}]\n"
-               "\tTime resolution:  {:<10.6f} [std_t, {}]\n"
-               "\tFreq resolution:  {:<10.6f} [std_w, {}]\n"
-               "\tHeisenberg area:  {:.12f}"
-               ).format(self.name, cfg, wc, wc_txt,
-                        std_t, dim_t, std_w, dim_w, harea))
+        pass
 
     def reset_properties(self):
         """Reset time-frequency properties (`Wavelet.TF_PROPS`), i.e.
         recompute for current `self.N`.
         """
-        for name in self.TF_PROPS:
-            setattr(self, f'_{name}', None)
-            getattr(self, name)  # trigger recomputation
+        pass
 
     def viz(self, name='overview', **kw):
         """`Wavelet.VISUALS` for list of supported `name`s."""
-        if name == 'overview':
-            for name in ('heatmap', 'harea', 'filterbank', 'time-frequency'):
-                kw['N'] = kw.get('N', self.N)
-                self._viz(name, **kw)
-        elif name not in Wavelet.VISUALS:
-            raise ValueError(f"visual '{name}' not supported; must be one of: "
-                             + ', '.join(Wavelet.VISUALS))
-        else:
-            self._viz(name, **kw)
+        pass
 
     def _viz(self, name, **kw):
         kw['wavelet'] = kw.get('wavelet', self)
@@ -368,21 +290,7 @@ class Wavelet():
 
     def _desc(self, N=None, scale=None, show_N=True):
         """Nicely-formatted parameter summary, used in other methods"""
-        if self.config_str != "Default configs":
-            ptxt = self.config_str.rstrip(', ') + ', '
-        else:
-            ptxt = ""
-
-        N = N or self.N
-        if scale is None:
-            title = "{} wavelet | {}N={}".format(self.name, ptxt, N)
-        else:
-            title = "{} wavelet | {}scale={:.2f}, N={}".format(
-                self.name, ptxt, scale, N)
-
-        if not show_N:
-            title = title[:title.find(f"N={N}")].rstrip(', ')
-        return title
+        pass
 
     @classmethod
     def _process_dtype(self, dtype, as_str=None):
@@ -408,66 +316,7 @@ class Wavelet():
         return Wavelet(wavelet, **kw)
 
     def _validate_and_set_wavelet(self, wavelet):
-        def process_dtype(wavopts, user_passed_float32):
-            """Handles GMW's `norm='energy'` w/ dtype='float32'."""
-            if wavopts.get('norm', 'bandpass') == 'energy':
-                if user_passed_float32:
-                    WARN("`norm='energy'` w/ `dtype='float32'` is unsupported; "
-                         "will use 'float64' instead.")
-                wavopts['dtype'] = 'float64'
-                self._dtype = 'float64'
-            elif self.dtype is not None:
-                wavopts['dtype'] = self.dtype
-
-        def set_dtype_from_out():
-            # 32 will promote to 64 if other params are 64
-            out_dtype = self.fn(S.asarray([1.], dtype='float32')).dtype
-            if any(tp in str(out_dtype) for tp in ('complex64', 'complex128')):
-                # 'bump' wavelet case
-                out_dtype = ('float32' if 'complex64' in str(out_dtype) else
-                             'float64')
-            self._dtype = self._process_dtype(out_dtype, as_str=True)
-
-        if isinstance(wavelet, FunctionType):
-            self.fn = wavelet
-            set_dtype_from_out()
-            self.config = {}
-            return
-
-        errmsg = ("`wavelet` must be one of: (1) string name of supported "
-                  "wavelet; (2) tuple of (1) and dict of wavelet parameters "
-                  "(e.g. {'mu': 5}); (3) custom function taking `scale * xi` "
-                  "as input. (got: %s)" % str(wavelet))
-        if not isinstance(wavelet, (tuple, str)):
-            raise TypeError(errmsg)
-        elif isinstance(wavelet, tuple):
-            if not (len(wavelet) == 2 and isinstance(wavelet[1], dict)):
-                raise TypeError(errmsg)
-            wavelet, wavopts = wavelet
-        elif isinstance(wavelet, str):
-            wavopts = {}
-
-        user_passed_float32 = any('float32' in str(t)
-                                  for t in (self.dtype, wavopts.get('dtype', 0)))
-        if isinstance(wavelet, str):
-            wavelet = wavelet.lower()
-            module = 'wavelets' if wavelet != 'gmw' else '_gmw'
-            wavopts = gdefaults(f"{module}.{wavelet}", get_all=True,
-                                as_dict=True, default_order=True, **wavopts)
-
-        process_dtype(wavopts, user_passed_float32)
-        assert_is_one_of(wavelet, 'wavelet', Wavelet.SUPPORTED)
-        self.fn = {
-            'gmw':    gmw,
-            'morlet': morlet,
-            'bump':   bump,
-            'cmhat':  cmhat,
-            'hhhat':  hhhat,
-        }[wavelet](**wavopts)
-
-        if self.dtype is None:
-            set_dtype_from_out()
-        self.config = wavopts
+        pass
 
 
 @jit(nopython=True, cache=True)
@@ -506,105 +355,70 @@ def morlet(mu=None, dtype=None):
     https://en.wikipedia.org/wiki/Morlet_wavelet#Definition
     https://www.desmos.com/calculator/0nslu0qivv
     """
-    mu, dtype = gdefaults('wavelets.morlet', mu=mu, dtype=dtype)
-    cs = (1 + np.exp(-mu**2) - 2 * np.exp(-3/4 * mu**2)) ** (-.5)
-    ks = np.exp(-.5 * mu**2)
-    mu, cs, ks = _process_params_dtype(mu, cs, ks, dtype=dtype)
-
-    # all other consts go to `C`; needed for numba.jit to not type promote to
-    # float64 due to Python floats (e.g. `2.`)
-    C = S.asarray([-.5, np.sqrt(2) * cs * pi**.25], dtype=dtype)
-
-    fn = _morlet_gpu if USE_GPU() else (_morlet_par if IS_PARALLEL() else _morlet)
-    return lambda w: fn(atleast_1d(w, dtype), mu, ks, C)
+    pass
 
 @jit(nopython=True, cache=True)
 def _morlet(w, mu, ks, C):
-    return C[1]* (np.exp(C[0] * (w - mu)**2) - ks * np.exp(C[0] * w**2))
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def _morlet_par(w, mu, ks, C):
-    return C[1]* (np.exp(C[0] * (w - mu)**2) - ks * np.exp(C[0] * w**2))
+    pass
 
 def _morlet_gpu(w, mu, ks, C):
-    return C[1] * (torch.exp(C[0] * (w - mu)**2) - ks * torch.exp(C[0] * w**2))
+    pass
 
 
 def bump(mu=None, s=None, om=None, dtype=None):
     """Bump wavelet.
     https://www.mathworks.com/help/wavelet/gs/choose-a-wavelet.html
     """
-    mu, s, om, dtype = gdefaults('wavelets.bump', mu=mu, s=s, om=om, dtype=dtype)
-    if 'float' in dtype:
-        dtype = 'complex' + str(2 * int(dtype.strip('float')))
-    mu, s, om = [S.asarray(g, dtype) for g in (mu, s, om)]
-    C = S.asarray([2 * pi * 1j * om, .443993816053287], dtype=dtype)
-    C0 = S.asarray(.999, dtype='float' + str(int(dtype.strip('complex'))//2))
-
-    fn = _bump_gpu if USE_GPU() else (_bump_par if IS_PARALLEL() else _bump)
-    return lambda w: fn(atleast_1d(w, dtype), (atleast_1d(w, dtype) - mu) / s,
-                        s, C, C0)
+    pass
 
 @jit(nopython=True, cache=True)
 def _bump(w, _w, s, C, C0):
-    return np.exp(C[0] * w) / s * (
-        np.abs(_w) < C0) * np.exp(
-            -1 / (1 - (_w * (np.abs(_w) < C0))**2)) / C[1]
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def _bump_par(w, _w, s, C, C0):
-    return np.exp(C[0] * w) / s * (
-        np.abs(_w) < C0) * np.exp(
-            -1 / (1 - (_w * (np.abs(_w) < C0))**2)) / C[1]
+    pass
 
 def _bump_gpu(w, _w, s, C, C0):
-    return torch.exp(C[0] * w) / s * (
-        torch.abs(_w) < C0) * torch.exp(
-            -1 / (1 - (_w * (torch.abs(_w) < C0))**2)) / C[1]
+    pass
 
 
 def cmhat(mu=None, s=None, dtype=None):
     """Complex Mexican Hat wavelet.
     https://en.wikipedia.org/wiki/Complex_mexican_hat_wavelet
     """
-    mu, s, dtype = gdefaults('wavelets.cmhat', mu=mu, s=s, dtype=dtype)
-    mu, s = _process_params_dtype(mu, s, dtype=dtype)
-    C = S.asarray([5/2, 2 * np.sqrt(2/3) * pi**(-1/4)], dtype=dtype)
-
-    fn = _cmhat_gpu if USE_GPU() else (_cmhat_par if IS_PARALLEL() else _cmhat)
-    return lambda w: fn(atleast_1d(w, dtype) - mu, s, C)
+    pass
 
 @jit(nopython=True, cache=True)
 def _cmhat(_w, s, C):
-    return C[1] * (s**C[0] * _w**2 * np.exp(-s**2 * _w**2 / 2) * (_w >= 0))
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def _cmhat_par(_w, s, C):
-    return C[1] * (s**C[0] * _w**2 * np.exp(-s**2 * _w**2 / 2) * (_w >= 0))
+    pass
 
 def _cmhat_gpu(_w, s, C):
-    return C[1] * (s**C[0] * _w**2 * torch.exp(-s**2 * _w**2 / 2) * (_w >= 0))
+    pass
 
 
 def hhhat(mu=None, dtype=None):
     """Hilbert analytic function of Hermitian Hat."""
-    mu, dtype = gdefaults('wavelets.hhhat', mu=mu, dtype=dtype)
-    mu = _process_params_dtype(mu, dtype=dtype)
-    C = S.asarray([-1/2, 2 / np.sqrt(5) * pi**(-1/4)], dtype=dtype)
-
-    fn = _hhhat_gpu if USE_GPU() else (_hhhat_par if IS_PARALLEL() else _hhhat)
-    return lambda w: fn(atleast_1d(w, dtype) - mu, C)
+    pass
 
 @jit(nopython=True, cache=True)
 def _hhhat(_w, C):
-    return C[1] * (_w * (1 + _w) * np.exp(C[0] * _w**2)) * (1 + np.sign(_w))
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def _hhhat_par(_w, C):
-    return C[1] * (_w * (1 + _w) * np.exp(C[0] * _w**2)) * (1 + np.sign(_w))
+    pass
 
 def _hhhat_gpu(_w, C):
-    return C[1] * (_w * (1 + _w) * torch.exp(C[0] * _w**2)) * (1 + torch.sign(_w))
+    pass
 
 
 #### Wavelet properties ######################################################
@@ -934,18 +748,11 @@ def afftshift(xh):
     whereas FFT convention is to file it under negative (see `_xi`).
     Moves right N//2 + 1 bins to left.
     """
-    if len(xh) % 2 == 0:
-        return _afftshift_even(xh, np.zeros(len(xh), dtype=xh.dtype))
-    return fftshift(xh)
+    pass
 
 @jit(nopython=True, cache=True)
 def _afftshift_even(xh, xhs):
-    N = len(xh)
-    for i in range(N // 2 + 1):
-        xhs[i] = xh[i + N // 2 - 1]
-    for i in range(N // 2 + 1, N):
-        xhs[i] = xh[i - N // 2 - 1]
-    return xhs
+    pass
 
 
 def aifftshift(xh):
@@ -966,13 +773,7 @@ def _aifftshift_even(xh, xhs):
 
 def _fn_to_name(fn):
     """`_` to ` `, removes `<lambda>` & `.`, handles `SPECIALS`."""
-    SPECIALS = {'Gmw ': 'GMW '}
-    name = fn.__qualname__.replace('_', ' ').replace('<locals>', '').replace(
-        '<lambda>', '').replace('.', '').title()
-
-    for k, v in SPECIALS.items():
-        name = name.replace(k, v)
-    return name
+    pass
 
 
 def isinstance_by_name(obj, ref):

@@ -168,19 +168,11 @@ def _accumulated_penalty_energy_fw(energy_to_track, penalty_matrix, parallel):
 
 @jit(nopython=True, cache=True)
 def __accumulated_penalty_energy_fw(penalized_energy, penalty_matrix):
-    for idx_time in range(1, penalized_energy.shape[1]):
-        for idx_freq in range(0, penalized_energy.shape[0]):
-            penalized_energy[idx_freq, idx_time
-                             ] += np.amin(penalized_energy[:, idx_time - 1] +
-                                          penalty_matrix[idx_freq, :])
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def __accumulated_penalty_energy_fwp(penalized_energy, penalty_matrix):
-    for idx_time in range(1, penalized_energy.shape[1]):
-        for idx_freq in prange(0, penalized_energy.shape[0]):
-            penalized_energy[idx_freq, idx_time
-                             ] += np.amin(penalized_energy[:, idx_time - 1] +
-                                          penalty_matrix[idx_freq, :])
+    pass
 
 
 def _accumulated_penalty_energy_bw(energy_to_track, penalty_matrix,
@@ -205,28 +197,11 @@ def _accumulated_penalty_energy_bw(energy_to_track, penalty_matrix,
 
 @jit(nopython=True, cache=True)
 def __accumulated_penalty_energy_bw(e, penalty_matrix, pen_e, ridge_idxs_fw, eps):
-    for idx_time in range(e.shape[1] - 2, -1, -1):
-        val = (pen_e[ridge_idxs_fw[idx_time + 1], idx_time + 1] -
-               e[    ridge_idxs_fw[idx_time + 1], idx_time + 1])
-        for idx_freq in range(e.shape[0]):
-            new_penalty = penalty_matrix[ridge_idxs_fw[idx_time + 1], idx_freq]
-
-            if abs(val - (pen_e[idx_freq, idx_time] + new_penalty)) < eps:
-                ridge_idxs_fw[idx_time] = idx_freq
+    pass
 
 @jit(nopython=True, cache=True, parallel=True)
 def __accumulated_penalty_energy_bwp(e, penalty_matrix, pen_e, ridge_idxs_fw,
                                      eps):
     # adding `prange` to `tidx` makes whole computation much faster (x3-4),
     # but breaks it on *some* inputs (unpredictably)
-    for tidx in range(e.shape[1] - 1):
-        # `prange` only supports a step size of 1, so we use a trick
-        # actually can't `prange` `tidx`, not thread-safe
-        idx_time = (e.shape[1] - 2) - tidx
-        val = (pen_e[ridge_idxs_fw[idx_time + 1], idx_time + 1] -
-               e[    ridge_idxs_fw[idx_time + 1], idx_time + 1])
-        for idx_freq in prange(e.shape[0]):
-            new_penalty = penalty_matrix[ridge_idxs_fw[idx_time + 1], idx_freq]
-
-            if abs(val - (pen_e[idx_freq, idx_time] + new_penalty)) < eps:
-                ridge_idxs_fw[idx_time] = idx_freq
+    pass

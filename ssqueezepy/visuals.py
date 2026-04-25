@@ -19,113 +19,7 @@ def wavelet_tf(wavelet, N=2048, scale=None, notext=False, width=1.1, height=1):
     `wavelet` is instance of `wavelets.Wavelet` or its valid `wavelet` argument.
     See also: https://www.desmos.com/calculator/0nslu0qivv
     """
-    def pick_scale(wavelet, N):
-        """Pick scale such that both time- & freq-domain wavelets look nice."""
-        st_min, st_max = 65 * (N / 2048), 75 * (N / 2048)
-        max_iters = 100
-        scale = wavelet.scalec_ct
-        # generous `min_decay` since we don't care about initial bad cases
-        kw = dict(wavelet=wavelet, N=N, min_decay=1, nondim=False)
-        std_t = time_resolution(scale=scale, **kw)
-
-        i = 0
-        while not (st_min < std_t < st_max):
-            if std_t > st_max:
-                scale /= 1.1
-            else:
-                scale *= 1.1
-            std_t = time_resolution(scale=scale, **kw)
-
-            if i > max_iters:
-                raise ValueError(f"couldn't autofind `scale` after {max_iters} "
-                                 "iterations, aborting")
-            i += 1
-        return scale
-
-    wavelet = Wavelet._init_if_not_isinstance(wavelet)
-    if scale is None:
-        scale = pick_scale(wavelet, N)
-
-    #### Compute psi & psihf #################################################
-    psi = asnumpy(wavelet.psifn(scale=scale, N=N))
-    apsi = np.abs(psi)
-    t = np.arange(-N/2, N/2, step=1)
-
-    w = _xifn(1, N)[:N//2 + 1]
-    psih = asnumpy(wavelet(scale * w))
-
-    #### Compute stdevs & respective indices #################################
-    wc    = center_frequency(wavelet, scale, N)
-    std_w = freq_resolution(wavelet, scale, N, nondim=0)
-    std_t = time_resolution(wavelet, scale, N, nondim=0, min_decay=1)
-    _wc = np.pi - wc
-
-    wlix = np.argmin(np.abs(w - (_wc - std_w)))
-    wrix = np.argmin(np.abs(w - (_wc + std_w)))
-    wl, wr = w[wlix], w[wrix]
-
-    tlix = np.argmin(np.abs(t - (0 - std_t)))
-    trix = np.argmin(np.abs(t - (0 + std_t)))
-    tl, tr = t[tlix], t[trix]
-
-    ## Rescale psi so that its y-coords span 1/5 of psih's x-coords, & vice-versa
-    frac = 5
-    psig  = psi  * (w.max() / apsi.max()) / frac
-    apsig = apsi * (w.max() / apsi.max()) / frac
-    psihg = psih * (t.max() / psih.max()) / frac
-    # additionally shift psih to psi's left
-    psihg += t.min()
-
-    ## Find intersections
-    w_xminu, w_xmax = psihg[::-1][wlix], tr
-    w_xmind = psihg[::-1][wrix]  # psih not necessarily symmetric
-    w_ymin, w_ymax = wl, wr
-    t_xmin, t_xmax = tl, tr
-    t_yminl, t_ymax = apsig[tlix], wr
-    t_yminr = apsig[trix]  # same for psi
-
-    #### Plot ################################################################
-    plot(t, psig, complex=1, h=1.5)
-    plot(t, apsig, linestyle='--', color='k')
-    plot(psihg[::-1], w, color='purple')
-
-    # bounds lines
-    lkw = dict(color='k', linewidth=1)
-    plot([t_xmin,  t_xmin], [t_yminl, t_ymax], **lkw)
-    plot([t_xmax,  t_xmax], [t_yminr, t_ymax], **lkw)
-    plot([w_xminu, w_xmax], [w_ymin,  w_ymin], **lkw)
-    plot([w_xmind, w_xmax], [w_ymax,  w_ymax], **lkw)
-    plt.xlim(t.min()*1.02, t.max()*1.02)
-
-    # radians 0 to pi from top to bottom(=psi's mean)
-    ylabels = np.round(np.linspace(np.pi, 0, 7), 1)
-    plt.yticks(np.linspace(0, np.pi, len(ylabels)), ylabels)
-
-    if notext:
-        plt.gcf().set_size_inches(12*width, 12*height)
-        plt.show()
-        return
-    #### Title, annotations, labels, styling #################################
-    ## Annotation: info summary
-    txt = ("    wc = {:<6.5f} rad-c/s\n"
-           " std_t = {:<6.4f} s/c-rad\n"
-           " std_w = {:<6.5f} rad-c/s\n"
-           "area/4 = {:.12f}\n"
-           "       = std_t * std_w\n\n"
-           "(rad-c/s=\n radians*cycles/samples)"
-           ).format(wc, std_t, std_w, std_t * std_w)
-    _annotate(txt, xy=(.7, .76), fontsize=16)
-
-    ## Title: wavelet name & parameters
-    title = wavelet._desc(N=N, scale=scale)
-    plt.title(title, loc='left', weight='bold', fontsize=16)
-
-    ## Styling
-    plt.xlabel("samples", weight='bold', fontsize=15)
-    plt.ylabel("radians", weight='bold', fontsize=15)
-
-    plt.gcf().set_size_inches(12*width, 12*height)
-    plt.show()
+    pass
 
 
 def wavelet_tf_anim(wavelet, N=2048, scales=None, width=1.1, height=1,
@@ -138,194 +32,11 @@ def wavelet_tf_anim(wavelet, N=2048, scales=None, width=1.1, height=1,
     "well-behaved" range (without slashing max_scale, it's a lot outside such
     range). May not work for every wavelet or all of their configs.
     """
-    def _make_anim_scales(scales, wavelet, N):
-        if scales is None:
-            scales = 'log:minimal'
-            mn, mx = cwt_scalebounds(wavelet, N=N, preset='maximal',
-                                     use_padded_N=False)
-            scales = make_scales(N, 0.90*mn, 0.25*mx, scaletype='log')
-        else:
-            scales = process_scales(scales, N, wavelet, use_padded_N=False)
-
-        # compute early and late scales more densely as they capture more
-        # interesting behavior, so animation will slow down smoothly near ends
-        scales = scales.squeeze()
-        na = len(scales)
-
-        s0 = (25/253)*na  # empircally-determined good value
-
-        srepl = max(int(s0), 1)  # scales to keep from each end
-        srepr = max(int(s0), 1)
-        smull = 4        # extension factor
-        smulr = 3
-
-        sright = np.linspace(scales[-srepr], scales[-1],    srepr * smulr)
-        sleft  = np.linspace(scales[0],      scales[srepl], srepl * smull)
-        sright = np.hstack([sright, sright[-1].repeat(smulr*2)])  # smooth loop
-        sleft  = np.hstack([sleft[0].repeat(smull*2), sleft])
-
-        scales = np.hstack([sleft, scales[srepl:-srepr], sright])
-        scales  = scales.reshape(-1, 1)
-        return scales
-
-    from matplotlib.animation import FuncAnimation
-    import matplotlib
-    matplotlib.use("Agg")
-    NOTE("Switched matplotlib to 'Agg' backend for animating")
-
-    wavelet = Wavelet._init_if_not_isinstance(wavelet)
-    scales = _make_anim_scales(scales, wavelet, N)
-
-    #### Compute Psi & Psih ##################################################
-    Psi = asnumpy(wavelet.psifn(scale=scales, N=N))
-    aPsi = np.abs(Psi)
-    t = np.arange(-N/2, N/2, step=1)
-
-    w = _xifn(1, N)[:N//2 + 1]
-    Psih = asnumpy(wavelet(scales * w))
-
-    #### Compute stdevs & respective indices #################################
-    Wc    = np.zeros(len(scales))
-    std_W = Wc.copy()
-    std_T = Wc.copy()
-
-    for i, scale in enumerate(scales):
-        Wc[i]    = center_frequency(wavelet, float(scale), N, kind='energy')
-        std_W[i] = freq_resolution( wavelet, float(scale), N, nondim=0)
-        std_T[i] = time_resolution( wavelet, float(scale), N, nondim=0,
-                                    min_decay=1)
-    _Wc = np.pi - Wc
-
-    Wlix = find_closest((_Wc - std_W).reshape(-1, 1), w).squeeze()
-    Wrix = find_closest((_Wc + std_W).reshape(-1, 1), w).squeeze()
-    Wl, Wr = w[Wlix], w[Wrix]
-
-    Tlix = find_closest(0 - std_T.reshape(-1, 1), t).squeeze()
-    Trix = find_closest(0 + std_T.reshape(-1, 1), t).squeeze()
-    Tl, Tr = t[Tlix], t[Trix]
-
-    ## Rescale Psi so that its y-coords span 1/5 of Psih's x-coords, & vice-versa
-    frac = 5
-    Psig  = Psi  * (w.max() / aPsi.max(axis=-1)).reshape(-1, 1) / frac
-    aPsig = aPsi * (w.max() / aPsi.max(axis=-1)).reshape(-1, 1) / frac
-    Psihg = Psih * (t.max() / Psih.max(axis=-1)).reshape(-1, 1) / frac
-    # additionally shift Psih to Psi's left
-    Psihg += t.min()
-
-    ## Find intersections ####################################################
-    sidx = np.arange(len(scales))
-
-    W_xminu, W_xmax = Psihg[:, ::-1][sidx, Wlix], Tr
-    W_xmind = Psihg[:, ::-1][sidx, Wrix]  # Psih not necessarily symmetric
-    W_ymin, W_ymax = Wl, Wr
-
-    T_xmin, T_xmax = Tl, Tr
-    T_yminl, T_ymax = aPsig[sidx, Tlix], Wr
-    T_yminr = aPsig[sidx, Trix]  # same for Psi
-
-    ## Set up plot objects ###################################################
-    fig, ax = plt.subplots()
-    ax.set_xlim([t.min()*1.02, t.max()*1.02])
-    ax.set_ylim([-aPsig.max()*1.05, np.pi*1.02])
-
-    ylabels = np.round(np.linspace(np.pi, 0, 7), 1)
-    plt.yticks(np.linspace(0, np.pi, len(ylabels)), ylabels)
-
-    fig.set_size_inches(12*width, 12*height)
-
-    ## Title: wavelet name & parameters
-    title = wavelet._desc(N=N)
-    ax.set_title(title, loc='left', weight='bold', fontsize=16)
-
-    line1, = ax.plot([], [], color='tab:blue')
-    line2, = ax.plot([], [], color='tab:orange')
-    line3, = ax.plot([], [], color='k', linestyle='--')
-    line4, = ax.plot([], [], color='purple')
-
-    lkw = dict(color='k', linewidth=1)
-    line5, = ax.plot([], [], **lkw)
-    line6, = ax.plot([], [], **lkw)
-    line7, = ax.plot([], [], **lkw)
-    line8, = ax.plot([], [], **lkw)
-
-    tkw = dict(horizontalalignment='center', verticalalignment='center',
-               transform=ax.transAxes, fontsize=15, weight='bold')
-    txt = ax.text(.9, .95, "scale=%.2f" % scales[0], **tkw)
-    fig.tight_layout()
-
-    #### Animate #############################################################
-    def unique_savepath(savepath):
-        """Ensure doesn't overwrite existing"""
-        sp = Path(savepath)
-        savename = sp.stem
-
-        if sp.is_file():
-            paths = [str(p.stem) for p in Path(savepath).parent.iterdir()
-                     if savename in p.stem]
-            maxnum = 0
-            for p in paths:
-                num = p.replace(savename, '')
-                if num != '' and int(num) > maxnum:
-                    maxnum = int(num)
-            sp = Path(sp.parent, savename + str(maxnum + 1) + sp.suffix)
-        sp = str(sp)
-        return sp
-
-    def animate(i):
-        line1.set_data(t, Psig[i].real)
-        line2.set_data(t, Psig[i].imag)
-        line3.set_data(t, aPsig[i])
-        line4.set_data(Psihg[i][::-1], w)
-
-        line5.set_data([T_xmin[i],  T_xmin[i]], [T_yminl[i], T_ymax[i]])
-        line6.set_data([T_xmax[i],  T_xmax[i]], [T_yminr[i], T_ymax[i]])
-        line7.set_data([W_xminu[i], W_xmax[i]], [W_ymin[i],  W_ymin[i]])
-        line8.set_data([W_xmind[i], W_xmax[i]], [W_ymax[i],  W_ymax[i]])
-
-        txt.set_text("scale=%.2f" % scales[i])
-        return line1, line2, line3, line4, line5, line6, line7, line8
-
-    sp = unique_savepath(savepath)
-    print(("Successfully computed parameters, scales ranging {:.2f} to {:.2f}; "
-           "animating...\nWill save to: {}").format(
-               scales.min(), scales.max(), sp), flush=True)
-
-    frames = np.hstack([range(len(scales)), range(len(scales) - 1)[::-1]])
-    if testing:  # animation takes long; skip when unit-testing
-        print("Passed `testing=True`, won't animate")
-        return
-    anim = FuncAnimation(fig, animate, frames=frames, interval=60,
-                         blit=True, repeat=False)
-
-    anim.save(sp, writer='imagemagick')
-    print("Animated and saved to", sp, flush=True)
+    pass
 
 
 def wavelet_heatmap(wavelet, scales='log', N=2048):
-    wavelet = Wavelet._init_if_not_isinstance(wavelet)
-    if not isinstance(scales, np.ndarray):
-        scales = process_scales(scales, N, wavelet, use_padded_N=False)
-
-    #### Compute time- & freq-domain wavelets for all scales #################
-    Psi = asnumpy(wavelet.psifn(scale=scales, N=N))
-
-    w = _xifn(1, N)[:N//2 + 1]
-    Psih = asnumpy(wavelet(scales * w))
-
-    #### Plot ################################################################
-    mx = np.abs(Psi).max() * .01
-    title0 = wavelet._desc(N=N)
-
-    kw = dict(ylabel="scales", xlabel="samples")
-    imshow(Psi.real,   norm=(-mx, mx), yticks=scales,
-           title=title0 + " | Time-domain; real part", **kw)
-
-    imshow(Psi, abs=1, cmap='bone', norm=(0, mx), yticks=scales,
-           title=title0 + " | Time-domain; abs-val", **kw)
-
-    kw['xlabel'] = "radians"
-    imshow(Psih, abs=1, yticks=scales, xticks=np.linspace(0, np.pi, N//2),
-           title=title0 + " | Freq-domain; abs-val", **kw)
+    pass
 
 
 def sweep_std_t(wavelet, N, scales='log', get=False, **kw):
@@ -533,102 +244,16 @@ def wavelet_filterbank(wavelet, N=1024, scales='log', skips=0, title_append=None
 
     `get=True` to return the filter bank (ignores `skip`).
     """
-    def _title():
-        scaletype = infer_scaletype(scales)[0]
-        desc = wavelet._desc(N=N)
-        desc = desc.replace(" |", " filterbank |")
-
-        title = "{}, scaletype={}{}".format(desc, scaletype, title_append or '')
-        title = _textwrap(title, wrap_len=72)
-        return title
-
-    # process `scales` & prepare freq-domain wavelets
-    scales = process_scales(scales, N, wavelet)
-    wavelet = Wavelet._init_if_not_isinstance(wavelet)
-    Psih = asnumpy(wavelet(scale=scales, N=N))
-
-    # process `skips`
-    Psih_show, scales_show = [], []
-    for i, psih in enumerate(Psih):
-        if i % (skips + 1) == 0:
-            Psih_show.append(psih)
-            scales_show.append(scales[i])
-    Psih_show = np.vstack(Psih_show).T
-
-    # prepare plot params
-    if positives:
-        w = None
-        xlims = (-N/100, N*1.01)
-    else:
-        Psih_show = Psih_show[:N//2]
-        w = np.linspace(0, np.pi, N//2, endpoint=True)
-        xlims = (-np.pi/100, np.pi*1.01)
-
-    # plot
-    if positives:
-        plt.axvline(N/2, color='tab:red')  # show Nyquist
-    plot(w, Psih_show, color='tab:blue', title=_title(), xlims=xlims, show=0,
-         xlabel="radians")
-
-    # style
-    _, ymax = plt.gca().get_ylim()
-    plt.ylim(-ymax/100, ymax*1.03)
-    txt = "(min, max)=(%.3f, %.1f)" % (np.min(scales_show), np.max(scales_show))
-    _annotate(txt, xy=(.63, .95), fontsize=17)
-
-    if show:
-        plt.show()
-    if get:
-        return Psih
+    pass
 
 
 def viz_cwt_higher_order(Wx_k, scales=None, wavelet=None, **imshow_kw):
-    if wavelet is not None:
-        wavelet = Wavelet._init_if_not_isinstance(wavelet)
-        title_append = " | " + wavelet._desc(show_N=False)
-    else:
-        title_append = ''
-    yticks = scales.squeeze() if (scales is not None) else None
-    if imshow_kw.get('ticks', 1):
-        imshow_kw['yticks'] = imshow_kw.get('yticks', yticks)
-
-    if isinstance(Wx_k, list):
-        for k, Wx in enumerate(Wx_k):
-            title = "abs(CWT), order={}{}".format(k, title_append)
-            imshow(Wx, abs=1, title=title, **imshow_kw)
-
-        Wx_ka = np.mean(np.abs(np.vstack([Wx_k])), axis=0)
-        order_str = ','.join(map(str, range(len(Wx_k))))
-        title = "abs(CWT), orders {} avg{}".format(order_str, title_append)
-        imshow(Wx_ka, abs=1, title=title, **imshow_kw)
-
-    else:
-        title = "abs(CWT), higher-order avg{}".format(title_append)
-        imshow(Wx_k, abs=1, title=title, **imshow_kw)
+    pass
 
 
 def viz_gmw_orders(N=1024, n_orders=3, scale=5, gamma=3, beta=60,
                    norm='bandpass'):
-    wavs = []
-    for k in range(n_orders):
-        wav = Wavelet(('gmw', dict(gamma=gamma, beta=beta, norm=norm, order=k)))
-        wavs.append(wav)
-
-    psihs = [wav(scale=scale)[:N//2 + 1] for wav in wavs]
-    psis  = [wav.psifn(scale=scale)      for wav in wavs]
-    w = np.linspace(0, np.pi, N//2 + 1, endpoint=True)
-
-    desc = wavs[0]._desc(show_N=False)
-    orders_str = ','.join(map(str, range(n_orders)))
-
-    for psih in psihs:
-        plot(w, psih, title="Freq-domain, orders=%s | %s" % (orders_str, desc))
-    plot([], show=1)
-
-    for k, psi in enumerate(psis):
-        plot(psi, complex=1)
-        plot(psi, abs=1, color='k', linestyle='--', show=1,
-             title=f"Time-domain, order={k} | {desc}")
+    pass
 
 
 #### Visual tools ## messy code ##############################################
@@ -893,36 +518,13 @@ def scat(x, y=None, title=None, show=0, ax_equal=False, s=18, w=None, h=None,
 
 
 def plotscat(*args, **kw):
-    show = kw.pop('show', False)
-    plot(*args, **kw)
-    scat(*args, **kw)
-    if show:
-        plt.show()
+    pass
 
 
 def hist(x, bins=500, title=None, show=0, stats=0, ax=None, fig=None,
          w=1, h=1, xlims=None, ylims=None, xlabel=None, ylabel=None):
     """Histogram. `stats=True` to print mean, std, min, max of `x`."""
-    def _fmt(*nums):
-        return [(("%.3e" % n) if (abs(n) > 1e3 or abs(n) < 1e-3) else
-                 ("%.3f" % n)) for n in nums]
-
-    ax  = ax  or plt.gca()
-    fig = fig or plt.gcf()
-
-    x = np.asarray(x)
-    _ = ax.hist(x.ravel(), bins=bins)
-    _maybe_title(title, ax=ax)
-    _scale_plot(fig, ax, show=show, w=w, h=h, xlims=xlims, ylims=ylims,
-                xlabel=xlabel, ylabel=ylabel)
-    if show:
-        plt.show()
-
-    if stats:
-        mu, std, mn, mx = (x.mean(), x.std(), x.min(), x.max())
-        print("(mean, std, min, max) = ({}, {}, {}, {})".format(
-            *_fmt(mu, std, mn, mx)))
-        return mu, std, mn, mx
+    pass
 
 
 def _vhlines(lines, kind='v', ax=None):
@@ -944,8 +546,7 @@ def _vhlines(lines, kind='v', ax=None):
 
 
 def _fmt(*nums):
-    return [(("%.3e" % n) if (abs(n) > 1e3 or abs(n) < 1e-3) else
-             ("%.3f" % n)) for n in nums]
+    pass
 
 def _ticks(xticks, yticks, ax):
     def fmt(ticks):
@@ -1020,12 +621,7 @@ def _scale_plot(fig, ax, show=False, ax_equal=False, w=None, h=None,
 
 
 def _annotate(txt, xy=(.85, .9), weight='bold', fontsize=16):
-    _kw = dict(xycoords='axes fraction', xy=xy, weight=weight, fontsize=fontsize)
-    try:
-        # 'Consolas' for vertical align
-        plt.annotate(txt, family='Consolas', **_kw)
-    except:
-        plt.annotate(txt, **_kw)  # in case platform lacks 'Consolas'
+    pass
 
 
 #############################################################################
