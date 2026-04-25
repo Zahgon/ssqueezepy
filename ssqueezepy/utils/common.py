@@ -45,10 +45,7 @@ def p2up(n):
         n2: int
             Right pad length.
     """
-    up = int(2**(1 + np.round(np.log2(n))))
-    n2 = int((up - n) // 2)
-    n1 = int(up - n - n2)
-    return up, n1, n2
+    pass
 
 
 def padsignal(x, padtype='reflect', padlength=None, get_params=False):
@@ -92,70 +89,8 @@ def padsignal(x, padtype='reflect', padlength=None, get_params=False):
         6-lifting%20wavelet%20and%20filterbank.pdf
     """
     def _process_args(x, padtype):
-        is_numpy = bool(isinstance(x, np.ndarray))
-        supported = (('zero', 'reflect', 'symmetric', 'replicate', 'wrap')
-                     if is_numpy else
-                     ('zero', 'reflect'))
-        assert_is_one_of(padtype, 'padtype', supported)
-
-        if not hasattr(x, 'ndim'):
-            raise TypeError("`x` must be a numpy array or torch Tensor "
-                            "(got %s)" % type(x))
-        elif x.ndim not in (1, 2):
-            raise ValueError("`x` must be 1D or 2D (got x.ndim == %s)" % x.ndim)
-        return is_numpy
-
-    is_numpy = _process_args(x, padtype)
-    N = x.shape[-1]
-
-    if padlength is None:
-        # pad up to the nearest power of 2
-        n_up, n1, n2 = p2up(N)
-    else:
-        n_up = padlength
-        if abs(padlength - N) % 2 == 0:
-            n1 = n2 = (n_up - N) // 2
-        else:
-            n2 = (n_up - N) // 2
-            n1 = n2 + 1
-    n_up, n1, n2 = int(n_up), int(n1), int(n2)
-
-    # set functional spec
-    if x.ndim == 1:
-        pad_width = (n1, n2)
-    elif x.ndim == 2:
-        pad_width = ([(0, 0), (n1, n2)] if is_numpy else
-                     (n1, n2))
-
-    # comments use (n=4, n1=4, n2=3) as example, but this combination can't occur
-    if is_numpy:
-        if padtype == 'zero':
-            # [1,2,3,4] -> [0,0,0,0, 1,2,3,4, 0,0,0]
-            xp = np.pad(x, pad_width)
-        elif padtype == 'reflect':
-            # [1,2,3,4] -> [3,4,3,2, 1,2,3,4, 3,2,1]
-            xp = np.pad(x, pad_width, mode='reflect')
-        elif padtype == 'replicate':
-            # [1,2,3,4] -> [1,1,1,1, 1,2,3,4, 4,4,4]
-            xp = np.pad(x, pad_width, mode='edge')
-        elif padtype == 'wrap':
-            # [1,2,3,4] -> [1,2,3,4, 1,2,3,4, 1,2,3]
-            xp = np.pad(x, pad_width, mode='wrap')
-        elif padtype == 'symmetric':
-            # [1,2,3,4] -> [4,3,2,1, 1,2,3,4, 4,3,2]
-            if x.ndim == 1:
-                xp = np.hstack([x[::-1][-n1:], x, x[::-1][:n2]])
-            elif x.ndim == 2:
-                xp = np.hstack([x[:, ::-1][:, -n1:], x, x[:, ::-1][:, :n2]])
-    else:
-        import torch
-        mode = 'constant' if padtype == 'zero' else 'reflect'
-        if x.ndim == 1:
-            xp = torch.nn.functional.pad(x[None], pad_width, mode)[0]
-        else:
-            xp = torch.nn.functional.pad(x, pad_width, mode)
-
-    return (xp, n_up, n1, n2) if get_params else xp
+        pass
+    pass
 
 
 def trigdiff(A, fs=1., padtype=None, rpadded=None, N=None, n1=None, window=None,
@@ -190,59 +125,9 @@ def trigdiff(A, fs=1., padtype=None, rpadded=None, N=None, n1=None, window=None,
             is done. `'stft'` currently not supported.
 
     """
-    from ..wavelets import _xifn
-    from . import backend as S
-
     def _process_args(A, rpadded, padtype, N, transform, window):
-        if transform == 'stft':
-            raise NotImplementedError("`transform='stft'` is currently not "
-                                      "supported.")
-        assert isinstance(A, np.ndarray) or S.is_tensor(A), type(A)
-        assert A.ndim in (2, 3)
-
-        if rpadded and N is None:
-            raise ValueError("must pass `N` if `rpadded`")
-        if transform == 'stft' and window is None:
-            raise ValueError("`transform='stft'` requires `window`")
-
-        rpadded = rpadded or False
-        padtype = padtype or ('reflect' if not rpadded else None)
-        return rpadded, padtype
-
-    rpadded, padtype = _process_args(A, rpadded, padtype, N, transform, window)
-
-    if padtype is not None:
-        A, _, n1, *_ = padsignal(A, padtype, get_params=True)
-
-    if transform == 'cwt':
-        xi = S.asarray(_xifn(1, A.shape[-1]), A.dtype)
-
-        A_freqdom = fft(A, axis=-1, astensor=True)
-        A_diff = ifft(A_freqdom * 1j * xi * fs, axis=-1, astensor=True)
-    else:
-        # this requires us to first fully invert STFT(x), then `buffer(x)`,
-        # then compute `diff_window`, which isn't hard to implement;
-        # last of these is done
-
-        # wf = fft(S.asarray(window, A.dtype))
-        # xi = S.asarray(_xifn(1, len(window))[None], A.dtype)
-        # if len(window) % 2 == 0:
-        #     xi[len(window) // 2] = 0
-        # reshape = (-1, 1) if A.ndim == 2 else (1, -1, 1)
-        # diff_window = ifft(wf * 1j * xi).real.reshape(*reshape)
         pass
-
-    if rpadded or padtype is not None:
-        if N is None:
-            N = A.shape[-1]
-        if n1 is None:
-            _, n1, _ = p2up(N)
-        idx = ((slice(None), slice(n1, n1 + N)) if A.ndim == 2 else
-               (slice(None), slice(None), slice(n1, n1 + N)))
-        A_diff = A_diff[idx]
-    if S.is_tensor(A_diff):
-        A_diff = A_diff.contiguous()
-    return A_diff
+    pass
 
 
 def est_riskshrink_thresh(Wx, nv):
@@ -277,18 +162,7 @@ def find_closest_parallel_is_faster(shape, dtype='float32', trials=7, verbose=1)
     """Returns True if `find_closest(, parallel=True)` is faster, as averaged
     over `trials` trials on dummy data.
     """
-    from timeit import timeit
-    from ..algos import find_closest
-
-    a = np.abs(np.random.randn(*shape).astype(dtype))
-    v = np.random.uniform(0, len(a), len(a)).astype(dtype)
-
-    t0 = timeit(lambda: find_closest(a, v, parallel=False), number=trials)
-    t1 = timeit(lambda: find_closest(a, v, parallel=True),  number=trials)
-    if verbose:
-        print("Parallel avg.:     {} sec\nNon-parallel avg.: {} sec".format(
-            t1 / trials, t0 / trials))
-    return t1 > t0
+    pass
 
 
 def mad(data, axis=None):
@@ -297,13 +171,9 @@ def mad(data, axis=None):
 
 
 def assert_is_one_of(x, name, supported, e=ValueError):
-    if x not in supported:
-        raise e("`{}` must be one of: {} (got {})".format(
-            name, ', '.join(supported), x))
+    pass
 
 
 def _textwrap(txt, wrap_len=50):
     """Preserves line breaks and includes `'\n'.join()` step."""
-    return '\n'.join(['\n'.join(
-        wrap(line, wrap_len, break_long_words=False, replace_whitespace=False))
-        for line in txt.splitlines() if line.strip() != ''])
+    pass

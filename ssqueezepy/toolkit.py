@@ -8,16 +8,7 @@ def lin_band(Tx, slope, offset, bw=.025, **kw):
     """Visually estimate a linear band to invert over in time-frequency(/scale)
     plane.
     """
-    na, N = Tx.shape
-    tcs = np.linspace(0, 1, N)
-    Cs       = slope*(tcs + offset) * na
-    freqband = bw * na * np.ones(N)
-    Cs, freqband = Cs.astype('int32'), freqband.astype('int32')
-
-    imshow(Tx, abs=1, aspect='auto', show=0, **kw)
-    plot(Cs + freqband, color='r')
-    plot(Cs - freqband, color='r', show=1)
-    return Cs, freqband
+    pass
 
 
 #### Signals #################################################################

@@ -189,125 +189,10 @@ def ssq_cwt(x, wavelet='gmw', scales='log-piecewise', nv=None, fs=None, t=None,
     """
     def _process_args(x, scales, fs, t, nv, difftype, difforder, squeezing,
                       maprange, wavelet, get_w):
-        if x.ndim == 2 and get_w:
-            raise NotImplementedError("`get_w=True` unsupported with batched "
-                                      "input.")
-        difforder = _check_ssqueezing_args(squeezing, maprange, wavelet,
-                                           difftype, difforder, get_w,
-                                           transform='cwt')
-        if nv is None and not isinstance(scales, np.ndarray):
-            nv = 32
-
-        N = x.shape[-1]
-        dt, fs, t = _process_fs_and_t(fs, t, N)
-        return N, dt, fs, difforder, nv
-
+        pass
     def _phase_transform(Wx, dWx, N, dt, gamma, difftype, difforder):
-        if difftype == 'trig':
-            # calculate instantaneous frequency directly from the
-            # frequency-domain derivative
-            w = phase_cwt(Wx, dWx, difftype, gamma)
-        elif difftype == 'phase':
-            # !!! bad; yields negatives, and forcing abs(w) doesn't help
-            # calculate inst. freq. from unwrapped phase of CWT
-            w = phase_cwt(Wx, None, difftype, gamma)
-        elif difftype == 'numeric':
-            # !!! tested to be very inaccurate for small scales
-            # calculate derivative numerically
-            _, n1, _ = p2up(N)
-            Wx = Wx[:, (n1 - 4):(n1 + N + 4)]
-            w = phase_cwt_num(Wx, dt, difforder, gamma)
-        return Wx, w
-
-    N, dt, fs, difforder, nv = _process_args(x, scales, fs, t, nv, difftype,
-                                             difforder, squeezing, maprange,
-                                             wavelet, get_w)
-    wavelet = Wavelet._init_if_not_isinstance(wavelet, N=N)
-
-    # CWT with higher-order GMWs
-    if isinstance(order, (tuple, list, range)) or order > 0:
-        # keep padding for `trigdiff`
-        kw = dict(wavelet=wavelet, scales=scales, fs=fs, nv=nv,
-                  l1_norm=True, derivative=False, padtype=padtype, rpadded=True,
-                  vectorized=vectorized, astensor=True,
-                  cache_wavelet=cache_wavelet, nan_checks=nan_checks)
-        _, n1, _ = p2up(N)
-        average = isinstance(order, (tuple, list, range))
-
-        Wx, scales = cwt(x, order=order, average=average, **kw)
-        dWx = trigdiff(Wx, fs, rpadded=True, N=N, n1=n1)
-        Wx = Wx[:, n1:n1 + N]
-        if S.is_tensor(Wx):
-            Wx = Wx.contiguous()
-
-    scales, cwt_scaletype, *_ = process_scales(scales, N, wavelet, nv=nv,
-                                               get_params=True)
-    # regular CWT
-    if order == 0:
-        # l1_norm=True to spare a multiplication; for SSQ_CWT L1 & L2 are exactly
-        # same anyway since we're inverting CWT over time-frequency plane
-        rpadded = (difftype == 'numeric')
-        Wx, scales, dWx = cwt(x, wavelet, scales=scales, fs=fs, nv=nv,
-                              l1_norm=True, derivative=True, padtype=padtype,
-                              rpadded=rpadded, vectorized=vectorized,
-                              astensor=True, patience=patience,
-                              cache_wavelet=cache_wavelet, nan_checks=nan_checks)
-
-    # make copy of `Wx` if specified
-    if preserve_transform is None:
-        preserve_transform = not S.is_tensor(Wx)
-    if preserve_transform:
-        _Wx = (Wx.copy() if not S.is_tensor(Wx) else
-               Wx.detach().clone())
-    else:
-        _Wx = Wx
-
-    # gamma
-    if gamma is None:
-        gamma = 10 * (EPS64 if S.is_dtype(Wx, 'complex128') else EPS32)
-
-    # compute `w` if `get_w` and free `dWx` from memory if `not get_dWx`
-    if get_w:
-        _Wx, w = _phase_transform(_Wx, dWx, N, dt, gamma, difftype, difforder)
-        _dWx = None  # don't use in `ssqueeze`
-        if not get_dWx:
-            dWx = None
-    else:
-        w = None
-        _dWx = dWx
-
-    # default to same scheme used by `scales`
-    if ssq_freqs is None:
-        ssq_freqs = cwt_scaletype
-    # affects `maprange` computation if non-tuple
-    was_padded = bool(padtype is not None)
-
-    # synchrosqueeze
-    Tx, ssq_freqs = ssqueeze(_Wx, w, ssq_freqs, scales, fs=fs,
-                             squeezing=squeezing, maprange=maprange,
-                             wavelet=wavelet, gamma=gamma, was_padded=was_padded,
-                             flipud=flipud, dWx=_dWx, transform='cwt')
-
-    # postprocessing & return
-    if difftype == 'numeric':
-        Wx = Wx[:, 4:-4]
-        Tx = Tx[:, 4:-4]
-        w  = w[:,  4:-4] if w is not None else None
-
-    if not astensor and S.is_tensor(Tx):
-        Tx, Wx, w, dWx, scales, ssq_freqs = [
-            g.cpu().numpy() if S.is_tensor(g) else g
-            for g in (Tx, Wx, w, dWx, scales, ssq_freqs)]
-    scales = scales.squeeze()
-
-    if get_w and get_dWx:
-        return Tx, Wx, ssq_freqs, scales, w, dWx
-    elif get_w:
-        return Tx, Wx, ssq_freqs, scales, w
-    elif get_dWx:
-        return Tx, Wx, ssq_freqs, scales, dWx
-    else:
-        return Tx, Wx, ssq_freqs, scales
+        pass
+    pass
 
 
 def issq_cwt(Tx, wavelet='gmw', cc=None, cw=None):
@@ -363,58 +248,17 @@ def issq_cwt(Tx, wavelet='gmw', cc=None, cw=None):
         https://github.com/ebrevdo/synchrosqueezing/blob/master/synchrosqueezing/
         synsq_cwt_iw.m
     """
-    cc, cw, full_inverse = _process_component_inversion_args(cc, cw)
-
-    if full_inverse:
-        # Integration over all frequencies recovers original signal
-        x = Tx.real.sum(axis=0)
-    else:
-        x = _invert_components(Tx, cc, cw)
-
-    wavelet = Wavelet._init_if_not_isinstance(wavelet)
-    Css = adm_ssq(wavelet)  # admissibility coefficient
-    # *2 per analytic wavelet & taking real part; Theorem 4.5 [2]
-    x *= (2 / Css)
-    return x
+    pass
 
 
 def _invert_components(Tx, cc, cw):
     # Invert Tx around curve masks in the time-frequency plane to recover
     # individual components; last one is the remaining signal
-    x = np.zeros((cc.shape[1] + 1, cc.shape[0]))
-    TxRemainder = Tx.copy()
-
-    for n in range(cc.shape[1]):
-        TxMask = np.zeros(Tx.shape, dtype='complex128')
-        upper_cc = np.clip(cc[:, n] + cw[:, n], 0, len(Tx))
-        lower_cc = np.clip(cc[:, n] - cw[:, n], 0, len(Tx))
-
-        # cc==-1 denotes no curve at that time,
-        # removing such points from inversion
-        upper_cc[np.where(cc[:, n] == -1)] = 0
-        lower_cc[np.where(cc[:, n] == -1)] = 1
-        for m in range(Tx.shape[1]):
-            idxs = slice(lower_cc[m], upper_cc[m] + 1)
-            TxMask[idxs, m] = Tx[idxs, m]
-            TxRemainder[idxs, m] = 0
-        x[n] = TxMask.real.sum(axis=0).T
-
-    x[n + 1] = TxRemainder.real.sum(axis=0).T
-    return x
+    pass
 
 
 def _process_component_inversion_args(cc, cw):
-    if (cc is None) and (cw is None):
-        full_inverse = True
-    else:
-        full_inverse = False
-        if cc.ndim == 1:
-            cc = cc.reshape(-1, 1)
-        if cw.ndim == 1:
-            cw = cw.reshape(-1, 1)
-        cc = cc.astype('int32')
-        cw = cw.astype('int32')
-    return cc, cw, full_inverse
+    pass
 
 
 def phase_cwt(Wx, dWx, difftype='trig', gamma=None, parallel=None):
@@ -476,37 +320,8 @@ def phase_cwt(Wx, dWx, difftype='trig', gamma=None, parallel=None):
         phase_cwt.m
     """
     def _process_input(Wx, parallel, gamma):
-        S.warn_if_tensor_and_par(Wx, parallel)
-        gpu = S.is_tensor(Wx)
-        if difftype != 'trig':
-            if gpu:
-                raise ValueError("`difftype != 'trig'` unsupported with tensor "
-                                 "inputs.")
-            elif parallel:
-                raise ValueError("`difftype != 'trig'` unsupported with "
-                                 "`parallel`.")
-        if gamma is None:
-            gamma = np.sqrt(EPS64 if S.is_dtype(Wx, 'complex128') else EPS32)
-        return gamma, gpu
-
-    gamma, gpu = _process_input(Wx, parallel, gamma)
-
-    if difftype == 'trig':
-        if gpu:
-            w = phase_cwt_gpu(Wx, dWx, gamma)
-        else:
-            w = phase_cwt_cpu(Wx, dWx, gamma, parallel)
-
-    elif difftype == 'phase':
-        # TODO gives bad results; shouldn't we divide by Wx?
-        u = np.unwrap(np.angle(Wx)).T
-        w = np.vstack([np.diff(u, axis=0), u[-1] - u[0]]).T / (2*pi)
-        np.abs(w, out=w)
-        replace_under_abs(w, ref=Wx, value=gamma, replacement=np.inf)
-    else:
-        raise ValueError(f"unsupported `difftype` '{difftype}'; must be one of "
-                         "'trig', 'phase'.")
-    return w
+        pass
+    pass
 
 
 def phase_cwt_num(Wx, dt, difforder=4, gamma=None):
@@ -546,44 +361,6 @@ def phase_cwt_num(Wx, dt, difforder=4, gamma=None):
         https://github.com/ebrevdo/synchrosqueezing/blob/master/synchrosqueezing/
         phase_cwt_num.m
     """
-    # unreliable; bad results on high freq pure tones
     def _differentiate(Wx, dt):
-        if difforder in (2, 4):
-            # append for differentiating
-            Wxr = np.hstack([Wx[:, -2:], Wx, Wx[:, :2]])
-
-        if difforder == 1:
-            w = np.hstack([Wx[:, 1:] - Wx[:, :-1],
-                           Wx[:, :1]  - Wx[:, -1:]])
-            w /= dt
-        elif difforder == 2:
-            # calculate 2nd-order forward difference
-            w = -Wxr[:, 4:] + 4 * Wxr[:, 3:-1] - 3 * Wxr[:, 2:-2]
-            w /= (2 * dt)
-        elif difforder == 4:
-            # calculate 4th-order central difference
-            w = -Wxr[:, 4:]
-            w += Wxr[:, 3:-1] * 8
-            w -= Wxr[:, 1:-3] * 8
-            w += Wxr[:, 0:-4]
-            w /= (12 * dt)
-        return w
-
-    if difforder not in (1, 2, 4):
-        raise ValueError("`difforder` must be one of: 1, 2, 4 "
-                         "(got %s)" % difforder)
-
-    w = _differentiate(Wx, dt)
-
-    # calculate inst. freq for each scale
-    # 2*pi norm per discretized inverse FT rather than inverse DFT
-    w = np.real(-1j * w / Wx) / (2*pi)
-
-    # epsilon from Daubechies, H-T Wu, et al.
-    # gamma from Brevdo, H-T Wu, et al.
-    gamma = gamma or 10 * (EPS64 if Wx.dtype == np.complex128 else EPS32)
-    w[np.abs(Wx) < gamma] = np.inf
-
-    # see `phase_cwt`, though negatives may no longer be in minority
-    w = np.abs(w)
-    return w
+        pass
+    pass

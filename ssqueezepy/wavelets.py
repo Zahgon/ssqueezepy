@@ -52,11 +52,7 @@ class Wavelet():
                 'std_t_d', 'std_w_d'}
 
     def __init__(self, wavelet='gmw', N=1024, dtype=None):
-        self._dtype = self._process_dtype(dtype, as_str=True
-                                          ) if dtype is not None else None
-        self._validate_and_set_wavelet(wavelet)
-
-        self.N = N  # also sets _xi
+        pass
 
     #### Main methods / properties ###########################################
     def __call__(self, w=None, *, scale=None, N=None, nohalf=True, imag_th=1e-8):
@@ -92,15 +88,7 @@ class Wavelet():
         """Compute time-domain wavelet; simply `ifft(psih)` with appropriate
         extra steps.
         """
-        psih = self(w, scale=scale, N=N, nohalf=False)
-        if psih.ndim in (1, 2):
-            pn = (-1)**S.arange(psih.shape[-1], dtype=self.dtype)
-        else:
-            raise ValueError("`psih` must yield to 1D or 2D (got %s)" % psih.ndim)
-
-        # * pn = freq-domain spectral reversal to center time-domain wavelet
-        psi = ifft(psih * pn, axis=-1)
-        return psi
+        pass
 
     def xifn(self, scale=None, N=None):
         """Computes `xi`, radian frequencies at which `wavelet` is sampled,
@@ -110,21 +98,7 @@ class Wavelet():
             N=128: [0, 1, 2, ..., 64, -63, -62, ..., -1] * (2*pi / N) * scale
             N=129: [0, 1, 2, ..., 64, -64, -63, ..., -1] * (2*pi / N) * scale
         """
-        if isinstance(scale, (np.ndarray, torch.Tensor)) and len(scale) > 1:
-            if scale.squeeze().ndim > 1:
-                raise ValueError("2D `scale` unsupported")
-            elif scale.ndim == 1:
-                scale = scale.reshape(-1, 1)  # add dim for proper broadcast
-        elif scale is None:
-            scale = 1.
-
-        scale = S.asarray(scale, dtype=self.dtype)
-        if N is None:
-            xi = scale * self.xi
-        else:
-            xi = scale * S.asarray(_xifn(scale=1., N=N,
-                                         dtype=getattr(np, self.dtype)))
-        return xi
+        pass
 
     def Psih(self, scale=None, N=None, nohalf=True):
         """Return pre-computed `psih` at scale(s) `scale` of length `N` if
@@ -134,24 +108,7 @@ class Wavelet():
 
         If both `scale` & `N` are None, will return previously computed `Psih`.
         """
-        pN = getattr(self, '_Psih_N', S.array([-1]))
-        ps = getattr(self, '_Psih_scale', S.array([-1]))
-        N_is_None = N is None
-        N = N or self.N
-        if ((scale is None and N_is_None) or
-                (N == pN and (len(scale) == len(ps) and S.allclose(scale, ps)))):
-            return self._Psih
-
-        # first empty existing to free memory
-        if getattr(self, '_Psih', None) is not None:
-            self._Psih = None
-            gc.collect()
-
-        self._Psih = self(scale=scale, N=N, nohalf=nohalf)
-        self._Psih_N = N
-        # store independent of external copy
-        self._Psih_scale = scale.clone() if S.is_tensor(scale) else scale.copy()
-        return self._Psih
+        pass
 
     @property
     def N(self):
@@ -275,18 +232,7 @@ class Wavelet():
         pass
 
     def _viz(self, name, **kw):
-        kw['wavelet'] = kw.get('wavelet', self)
-        kw['N'] = kw.get('N', self.N)
-        {
-            'heatmap':    visuals.wavelet_heatmap,
-            'waveforms':  visuals.wavelet_waveforms,
-            'filterbank': visuals.wavelet_filterbank,
-            'harea':      visuals.sweep_harea,
-            'std_t':      visuals.sweep_std_t,
-            'std_w':      visuals.sweep_std_w,
-            'time-frequency':      visuals.wavelet_tf,
-            'anim:time-frequency': visuals.wavelet_tf_anim,
-        }[name](**kw)
+        pass
 
     def _desc(self, N=None, scale=None, show_N=True):
         """Nicely-formatted parameter summary, used in other methods"""
@@ -297,23 +243,14 @@ class Wavelet():
         """Ensures `dtype` is supported, and converts per `as_str` (if True,
         numpy/torch -> str, else vice versa; if None, returns as-is).
         """
-        if isinstance(dtype, str):
-            assert_is_one_of(dtype, 'dtype', Wavelet.DTYPES)
-            if not as_str:
-                return getattr(Q, dtype)
-        elif not isinstance(dtype, (type, np.dtype, torch.dtype)):
-            raise TypeError("`dtype` must be string or type (np./torch.dtype) "
-                            "(got %s)" % dtype)
-        return dtype if not as_str else str(dtype).split('.')[-1]
+        pass
 
     #### Init ################################################################
     @classmethod
     def _init_if_not_isinstance(self, wavelet, **kw):
         """Circumvents type change from IPython's super-/auto-reload,
         but first checks with usual isinstance."""
-        if isinstance_by_name(wavelet, Wavelet):
-            return wavelet
-        return Wavelet(wavelet, **kw)
+        pass
 
     def _validate_and_set_wavelet(self, wavelet):
         pass
@@ -324,24 +261,10 @@ def _xifn(scale, N, dtype=np.float64):
     """N=128: [0, 1, 2, ..., 64, -63, -62, ..., -1] * (2*pi / N) * scale
        N=129: [0, 1, 2, ..., 64, -64, -63, ..., -1] * (2*pi / N) * scale
     """
-    xi = np.zeros(N, dtype=dtype)
-    h = scale * (2 * pi) / N
-    for i in range(N // 2 + 1):
-        xi[i] = i * h
-    for i in range(N // 2 + 1, N):
-        xi[i] = (i - N) * h
-    return xi
+    pass
 
 def _process_params_dtype(*params, dtype, auto_gpu=True):
-    if dtype is None:
-        dtype = S.asarray(params[0]).dtype
-    if auto_gpu:
-        dtype = Wavelet._process_dtype(dtype, as_str=True)
-        params = [S.astype(S.asarray(p), dtype) for p in params]
-    else:
-        dtype = Wavelet._process_dtype(dtype, as_str=True)
-        params = [np.asarray(p).astype(dtype) for p in params]
-    return params if len(params) > 1 else params[0]
+    pass
 
 #### Wavelet functions ######################################################
 def morlet(mu=None, dtype=None):
@@ -492,76 +415,16 @@ def center_frequency(wavelet, scale=None, N=1024, kind='energy', force_int=None,
         https://www.di.ens.fr/~mallat/papiers/WaveletTourChap1-2-3.pdf
     """
     def _viz(wc, params):
-        w, psih, apsih2 = params
-        _w = w[N//2-1:]; _psih = psih[N//2-1:]; _apsih2 = apsih2[N//2-1:]
-
-        wc = wc if (kind != 'peak-ct') else pi/4
-        vline = (wc, dict(color='tab:red', linestyle='--'))
-        plot(_w, _psih, show=1, vlines=vline,
-             title="psih(w)+ (frequency-domain wavelet, pos half)")
-        plot(_w, _w * _apsih2, show=1,
-             title="w^2 |psih(w)+|^2 (used to compute wc)")
-        print("wc={}".format(wc))
-
+        pass
     def _params(wavelet, scale, N):
-        w = S.asarray(aifftshift(_xifn(1, N)))
-        psih = asnumpy(wavelet(S.asarray(scale) * w))
-        apsih2 = np.abs(psih)**2
-        w = asnumpy(w)
-        return w, psih, apsih2
-
+        pass
     def _energy_wc(wavelet, scale, N, force_int):
-        use_formula = not force_int
-        if use_formula:
-            scale_orig = scale
-            wc_ct = _peak_ct_wc(wavelet, N)[0]
-            scale = (4/pi) * wc_ct
-
-        w, psih, apsih2 = _params(wavelet, scale, N)
-        wc = (integrate.trapezoid(apsih2 * w) /
-              integrate.trapezoid(apsih2))
-
-        if use_formula:
-            wc *= (scale / scale_orig)
-        return float(wc), (w, psih, apsih2)
-
+        pass
     def _peak_wc(wavelet, scale, N):
-        w, psih, apsih2 = _params(wavelet, scale, N)
-        wc = w[np.argmax(apsih2)]
-        return float(wc), (w, psih, apsih2)
-
+        pass
     def _peak_ct_wc(wavelet, N):
-        wc, _ = find_maximum(wavelet.fn)
-        # need `scale` such that `wavelet` peaks at `scale * xi.max()/4`
-        # thus: `wc = scale * (pi/2)` --> `scale = (4/pi)*wc`
-        scale = S.asarray((4/pi) * wc)
-        w, psih, apsih2 = _params(wavelet, scale, N)
-        return float(wc), (w, psih, apsih2)
-
-    if force_int and 'peak' in kind:
-        NOTE("`force_int` ignored with 'peak' in `kind`")
-    assert_is_one_of(kind, 'kind', ('energy', 'peak', 'peak-ct'))
-
-    if kind == 'peak-ct' and scale is not None:
-        NOTE("`scale` ignored with `peak = 'peak-ct'`")
-
-    if scale is None and kind != 'peak-ct':
-        # see _peak_ct_wc
-        wc, _ = find_maximum(wavelet.fn)
-        scale = (4/pi) * wc
-
-    wavelet = Wavelet._init_if_not_isinstance(wavelet)
-    if kind == 'energy':
-        force_int = force_int or True
-        wc, params = _energy_wc(wavelet, scale, N, force_int)
-    elif kind == 'peak':
-        wc, params = _peak_wc(wavelet, scale, N)
-    elif kind == 'peak-ct':
-        wc, params = _peak_ct_wc(wavelet, N)
-
-    if viz:
-        _viz(wc, params)
-    return wc
+        pass
+    pass
 
 
 def freq_resolution(wavelet, scale=10, N=1024, nondim=True, force_int=True,
@@ -585,43 +448,8 @@ def freq_resolution(wavelet, scale=10, N=1024, nondim=True, force_int=True,
         https://www.di.ens.fr/~mallat/papiers/WaveletTourChap1-2-3.pdf
     """
     def _viz():
-        _w = w[N//2-1:]; _psih = psih[N//2-1:]; _apsih2 = apsih2[N//2-1:]
-
-        plot(_w, _psih, show=1,
-             title="psih(w)+ (frequency-domain wavelet, pos half)")
-        plot(_w, (_w-wce)**2 * _apsih2, show=1,
-             title="(w-wc)^2 |psih(w)+|^2 (used to compute var_w)")
-        print("std_w={}".format(std_w))
-        if use_formula:
-            NOTE(f"integrated at scale={scale} then used formula; "
-                 "see help(freq_resolution) and try force_int=True")
-
-    wavelet = Wavelet._init_if_not_isinstance(wavelet)
-
-    # formula criterion not optimal; thresholds will vary by wavelet config
-    use_formula = ((scale < 4 or scale > N / 5) and not force_int)
-    if use_formula:
-        scale_orig = scale
-        scale = (4/pi) * wavelet.wc_ct
-
-    w = aifftshift(_xifn(1, N))
-    psih = asnumpy(wavelet(scale * w))
-    wce = center_frequency(wavelet, scale, force_int=force_int, kind='energy')
-
-    apsih2 = np.abs(psih)**2
-    var_w = (integrate.trapezoid((w - wce)**2 * apsih2, w) /
-             integrate.trapezoid(apsih2, w))
-
-    std_w = np.sqrt(var_w)
-    if use_formula:
-        std_w *= (scale / scale_orig)
-        scale = scale_orig
-    if nondim:
-        wcp = center_frequency(wavelet, scale, kind='peak')
-        std_w /= wcp
-    if viz:
-        _viz()
-    return std_w
+        pass
+    pass
 
 
 def time_resolution(wavelet, scale=10, N=1024, min_decay=1e3, max_mult=2,
@@ -674,72 +502,11 @@ def time_resolution(wavelet, scale=10, N=1024, min_decay=1e3, max_mult=2,
         https://www.di.ens.fr/~mallat/papiers/WaveletTourChap1-2-3.pdf
     """
     def _viz():
-        _w    = aifftshift(xi)[Nt//2-1:]
-        _psih = aifftshift(psih)[Nt//2-1:]
-
-        plot(_w, _psih, show=1,
-             title="psih(w)+ (frequency-domain wavelet, pos half)")
-        plot(t, t**2 * apsi2, title="t^2 |psi(t)|^2 (used to compute var_t)",
-             show=1)
-        _viz_cwt_scalebounds(wavelet, N, max_scale=scale, std_t=std_t, Nt=Nt)
-
-        print("std_t={}\nlen(t), len(t)/N, t_min, t_max = {}, {}, {}, {}".format(
-            std_t, len(t), len(t)/N, t.min(), t.max()))
-        if use_formula:
-            NOTE(f"integrated at scale={scale} then used formula; "
-                 "see help(time_resolution) and try force_int=True")
-
+        pass
     def _make_integration_t(wavelet, scale, N, min_decay, max_mult, min_mult):
         """Ensure `psi` decays sufficiently at integration bounds"""
-        for mult in np.arange(min_mult, max_mult + 1):
-            Nt = int(mult * N)
-            apsi2 = np.abs(asnumpy(wavelet.psifn(scale=scale, N=Nt)))**2
-            # ensure sufficient decay at endpoints (assumes ~symmetric decay)
-            if apsi2.max() / apsi2[:max(10, Nt//100)].mean() > min_decay:
-                break
-        else:
-            raise Exception(("Couldn't find decay timespan satisfying "
-                             "`(min_decay, max_mult) = ({}, {})` for `scale={}`; "
-                             "decrease former or increase latter or check "
-                             "`wavelet`".format(min_decay, max_mult, scale)))
-
-        # len(t) == mult*N (independent of T)
-        # `t` doesn't have zero-mean but that's correct for psi's peak & symmetry
-        T = N
-        t = np.arange(-mult * T/2, mult * T/2, step=T/N)
-        return t
-
-    wavelet = Wavelet._init_if_not_isinstance(wavelet)
-
-    # formula criterion not optimal; thresholds will vary by wavelet config
-    use_formula = ((scale < 4 or scale > N / 5) and not force_int)
-    if use_formula:
-        scale_orig = scale
-        scale = (4/pi) * wavelet.wc_ct
-
-    t = _make_integration_t(wavelet, scale, N, min_decay, max_mult, min_mult)
-    Nt = len(t)
-
-    xi = _xifn(1, Nt)
-    psih = asnumpy(wavelet(scale * xi, nohalf=False))
-    psi = asnumpy(ifft(psih * (-1)**np.arange(Nt)))
-
-    apsi2 = np.abs(psi)**2
-    var_t = (integrate.trapezoid(t**2 * apsi2, t) /
-             integrate.trapezoid(apsi2, t))
-
-    std_t = np.sqrt(var_t)
-    if use_formula:
-        std_t *= (scale_orig / scale)
-        scale = scale_orig
-    if nondim:
-        # 'energy' yields values closer to continuous-time counterparts,
-        # but we seek accuracy relative to discretized values
-        wc = center_frequency(wavelet, scale, N=N, kind='peak')
-        std_t *= wc
-    if viz:
-        _viz()
-    return std_t
+        pass
+    pass
 
 
 #### Misc ####################################################################
@@ -757,18 +524,11 @@ def _afftshift_even(xh, xhs):
 
 def aifftshift(xh):
     """Inversion also different; moves left N//2+1 bins to right."""
-    if len(xh) % 2 == 0:
-        return _aifftshift_even(xh, np.zeros(len(xh), dtype=xh.dtype))
-    return ifftshift(xh)
+    pass
 
 @jit(nopython=True, cache=True)
 def _aifftshift_even(xh, xhs):
-    N = len(xh)
-    for i in range(N // 2 + 1):
-        xhs[i + N//2 - 1] = xh[i]
-    for i in range(N // 2 + 1, N):
-        xhs[i - N//2 - 1] = xh[i]
-    return xhs
+    pass
 
 
 def _fn_to_name(fn):
@@ -780,9 +540,8 @@ def isinstance_by_name(obj, ref):
     """IPython reload can make isinstance(Obj(), Obj) fail; won't work if
     Obj has __str__ overridden."""
     def _class_name(obj):
-        name = getattr(obj, '__qualname__', getattr(obj, '__name__', ''))
-        return (getattr(obj, '__module__', '') + '.' + name).lstrip('.')
-    return _class_name(type(obj)) == _class_name(ref)
+        pass
+    pass
 
 
 ##############################################################################

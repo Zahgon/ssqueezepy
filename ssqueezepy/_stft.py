@@ -125,60 +125,8 @@ def stft(x, window=None, n_fft=None, win_len=None, hop_len=1, fs=None, t=None,
         stft_fw.m
     """
     def _stft(xp, window, diff_window, n_fft, hop_len, fs, modulated, derivative):
-        Sx = buffer(xp, n_fft, n_fft - hop_len, modulated)
-        if derivative:
-            dSx = buffer(xp, n_fft, n_fft - hop_len, modulated)
-
-        if modulated:
-            window = ifftshift(window, astensor=True)
-            if derivative:
-                diff_window = ifftshift(diff_window, astensor=True) * fs
-
-        reshape = (-1, 1) if xp.ndim == 1 else (1, -1, 1)
-        Sx *= window.reshape(*reshape)
-        if derivative:
-            dSx *= (diff_window.reshape(*reshape))
-
-        # keep only positive frequencies (Hermitian symmetry assuming real `x`)
-        axis = 0 if xp.ndim == 1 else 1
-        Sx = rfft(Sx, axis=axis, astensor=True)
-        if derivative:
-            dSx = rfft(dSx, axis=axis, astensor=True)
-        return (Sx, dSx) if derivative else (Sx, None)
-
-    # process args
-    assert x.ndim in (1, 2)
-    N = x.shape[-1]
-    _, fs, _ = _process_fs_and_t(fs, t, N)
-    n_fft = n_fft or min(N//hop_len, 512)
-
-    # process `window`, make `diff_window`, check NOLA, enforce `dtype`
-    if win_len is None:
-        win_len = (len(window) if isinstance(window, np.ndarray) else
-                   n_fft)
-    dtype = gdefaults('_stft.stft', dtype=dtype)
-    window, diff_window = get_window(window, win_len, n_fft, derivative=True,
-                                     dtype=dtype)
-    _check_NOLA(window, hop_len, dtype)
-    x = _process_params_dtype(x, dtype=dtype, auto_gpu=False)
-
-    # pad `x` to length `padlength`
-    padlength = N + n_fft - 1
-    xp = padsignal(x, padtype, padlength=padlength)
-
-    # arrays -> tensors if using GPU
-    if USE_GPU():
-        xp, window, diff_window = [torch.as_tensor(g, device='cuda') for g in
-                                   (xp, window, diff_window)]
-    # take STFT
-    Sx, dSx = _stft(xp, window, diff_window, n_fft, hop_len, fs, modulated,
-                    derivative)
-
-    # ensure indexing works as expected downstream (cupy)
-    Sx  = Sx.contiguous()  if is_tensor(Sx)  else Sx
-    dSx = dSx.contiguous() if is_tensor(dSx) else dSx
-
-    return (Sx, dSx) if derivative else Sx
+        pass
+    pass
 
 
 def istft(Sx, window=None, n_fft=None, win_len=None, hop_len=1, N=None,
@@ -225,111 +173,16 @@ def istft(Sx, window=None, n_fft=None, win_len=None, hop_len=1, N=None,
         https://github.com/ebrevdo/synchrosqueezing/blob/master/synchrosqueezing/
         stft_iw.m
     """
-    ### process args #####################################
-    n_fft = n_fft or (Sx.shape[0] - 1) * 2
-    win_len = win_len or n_fft
-    N = N or hop_len * Sx.shape[1]  # assume largest possible N if not given
-    dtype = 'float32' if str(Sx.dtype) == 'complex64' else 'float64'
-
-    window = get_window(window, win_len, n_fft=n_fft, dtype=dtype)
-    _check_NOLA(window, hop_len, dtype=dtype)
-
-    xbuf = irfft(Sx, n=n_fft, axis=0).real
-    if modulated:
-        xbuf = fftshift(xbuf, axes=0)
-
-    # overlap-add the columns
-    x = unbuffer(xbuf, window, hop_len, n_fft, N, win_exp)
-
-    # window norm, control for float precision
-    wn = window_norm(window, hop_len, n_fft, N, win_exp)
-    th = np.finfo(x.dtype).tiny
-    if wn.min() < th:
-        approx_nonzero_idxs = wn > th
-        x[approx_nonzero_idxs] /= wn[approx_nonzero_idxs]
-    else:
-        x /= wn
-
-    # unpad
-    x = x[n_fft//2 : -((n_fft - 1)//2)]
-
-    return x
+    pass
 
 
 def get_window(window, win_len, n_fft=None, derivative=False, dtype=None):
     """See `window` in `help(stft)`. Will return window of length `n_fft`,
     regardless of `win_len` (will pad if needed).
     """
-    if n_fft is None:
-        pl, pr = 0, 0
-    else:
-        if win_len > n_fft:
-            raise ValueError("Can't have `win_len > n_fft` ({} > {})".format(
-                win_len, n_fft))
-        pl = (n_fft - win_len) // 2
-        pr = (n_fft - win_len - pl)
-
-    if window is not None:
-        if isinstance(window, str):
-            # fftbins=True -> 'periodic' window -> narrower main side-lobe and
-            # closer to zero-phase in left=right padded case
-            # for windows edging at 0
-            window = sig.get_window(window, win_len, fftbins=True)
-
-        elif isinstance(window, np.ndarray):
-            if len(window) != win_len:
-                WARN("len(window) != win_len (%s != %s)" % (len(window), win_len))
-
-        else:
-            raise ValueError("`window` must be string or np.ndarray "
-                             "(got %s)" % window)
-    else:
-        # sym=False <-> fftbins=True (see above)
-        window = sig.windows.dpss(win_len, max(4, win_len//8), sym=False)
-
-    if len(window) < (win_len + pl + pr):
-        window = np.pad(window, [pl, pr])
-
-    if derivative:
-        wf = fft(window)
-        Nw = len(window)
-        xi = _xifn(1, Nw)
-        if Nw % 2 == 0:
-            xi[Nw // 2] = 0
-        # frequency-domain differentiation; see `dWx` return docs in `help(cwt)`
-        diff_window = ifft(wf * 1j * xi).real
-
-    # cast `dtype`, zero denormals (extremely small numbers that slow down CPU)
-    window = _process_params_dtype(window, dtype=dtype, auto_gpu=False)
-    zero_denormals(window)
-
-    if derivative:
-        diff_window = _process_params_dtype(diff_window, dtype=dtype,
-                                            auto_gpu=False)
-        zero_denormals(diff_window)
-    return (window, diff_window) if derivative else window
+    pass
 
 
 def _check_NOLA(window, hop_len, dtype=None, imprecision_strict=False):
     """https://gauss256.github.io/blog/cola.html"""
-    # basic NOLA
-    if hop_len > len(window):
-        WARN("`hop_len > len(window)`; STFT not invertible")
-    elif not sig.check_NOLA(window, len(window), len(window) - hop_len):
-        WARN("`window` fails Non-zero Overlap Add (NOLA) criterion; "
-             "STFT not invertible")
-
-    # handle `dtype`; note this is just a guess, what matters is `Sx.dtype`
-    if dtype is None:
-        dtype = str(window.dtype)
-
-    # check for right boundary effect: as ssqueezepy's number of output frames
-    # is critically sampled (not more than needed), it creates an issue with
-    # float32 and time-localized windows, which struggle to invert the last frame
-    tol = 0.15 if imprecision_strict else 1e-3
-    if dtype == 'float32' and not sig.check_NOLA(
-            window, len(window), len(window) - hop_len, tol=tol):
-        # 1e-3 can still have imprecision detectable by eye, but only upon few
-        # samples, so avoid paranoia. Use 1e-2 to be safe, and 0.15 for ~exact
-        WARN("Imprecision expected at right-most hop of signal, in inversion. "
-             "Lower `hop_len`, choose wider `window`, or use `dtype='float64'`.")
+    pass

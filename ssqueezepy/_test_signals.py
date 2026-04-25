@@ -140,18 +140,7 @@ class TestSignals():
 
     def __init__(self, N=None, snr=None, default_args=None, default_tkw=None,
                  warn_alias=True, seed=None):
-        self.N = N    or DEFAULT_N
-        self.snr = snr or DEFAULT_SNR
-        self.default_args = default_args or DEFAULT_ARGS
-        self.default_tkw  = default_tkw  or DEFAULT_TKW
-        self.warn_alias   = warn_alias
-        self.seed = seed or DEFAULT_SEED
-
-        # set defaults on unspecified
-        for k, v in DEFAULT_ARGS.items():
-            self.default_args[k] = self.default_args.get(k, v)
-        for k, v in DEFAULT_TKW.items():
-            self.default_tkw[k] = self.default_tkw.get(k, v)
+        pass
 
     #### test signals ########################################################
     def _maybe_warn_alias(self, phi, tol=.02):
@@ -376,110 +365,8 @@ class TestSignals():
             `name` and `am-name`, but latter two are used if former isn't set.
         """
         def raise_type_error(signal):
-            raise TypeError("all tuple or list elements of `signals` "
-                            "must be (str, dict) or (str, (dict, dict)) pairs "
-                            "(got (%s))" % ', '.join(
-                                map(lambda s: type(s).__name__, signal)))
-
-        if isinstance(signals, (str, tuple)):
-            if signals != 'all':
-                signals = [signals]
-        elif not isinstance(signals, list):
-            raise TypeError("`signals` must be string, list, or tuple "
-                            "(got %s)" % type(signals))
-
-        if isinstance(signals, list):
-            for signal in signals:
-                if isinstance(signal, str):
-                    if ':' in signal:
-                        fname, aname = signal.split(':')
-                    else:
-                        fname, aname = signal, ''
-                    fname = fname.lstrip('#')
-
-                    for name in (fname, aname):
-                        if name != '' and name not in self.SUPPORTED:
-                            raise ValueError(f"'{name}' is not supported; "
-                                             "must be one of: "
-                                             + ", ".join(self.SUPPORTED))
-                elif isinstance(signal, (list, tuple)):
-                    if not (isinstance(signal[0], str) and
-                            isinstance(signal[1], (dict, list, tuple))):
-                        raise_type_error(signal)
-                    elif (isinstance(signal[1], (list, tuple)) and
-                          not (isinstance(signal[1][0], dict) and
-                               isinstance(signal[1][1], dict))):
-                        raise_type_error(signal)
-                else:
-                    raise TypeError("all elements of `signals` must be string, "
-                                    "or tuple or list of (string, dict) or "
-                                    "(string, (dict, dict)) pairs "
-                                    "(found %s)" % type(signal))
-
-        if signals == 'all':
-            signals = self.DEMO.copy()
-        elif not isinstance(signals, (list, tuple)):
-            signals = [signals]
-
-        names, params_all = [], []
-        for signal in signals:
-            if isinstance(signal, (tuple, list)):
-                name, params = signal
-                if isinstance(params, (list, tuple)):
-                    fparams, aparams = params
-                else:
-                    fparams, aparams = params, {}
-            else:
-                name, fparams, aparams = signal, {}, {}
-
-            if name[0] == '#':
-                add_reversed = True
-                name = name[1:]
-            else:
-                add_reversed = False
-
-            if 'am-' in name:
-                if name.startswith('am-'):
-                    if name.endswith(':'):
-                        name = name.rstrip(':')
-                    fname, aname = 'cosine', name
-                    defaults = (self.default_args.get(fname, {}),
-                                self.default_args.get(aname, {}))
-                    name = fname + ':' + aname
-                else:
-                    defaults = self.default_args.get(name, {})
-                    fname, aname = name.split(':')
-
-                if isinstance(defaults, (list, tuple)):
-                    fdefaults, adefaults = defaults
-                elif isinstance(defaults, dict) and defaults != {}:
-                    fdefaults, adefaults = defaults, {}
-                else:
-                    fdefaults, adefaults = self.default_args.get(fname, {}), {}
-
-                if adefaults == {}:
-                    adefaults = self.default_args.get(aname, {})
-
-                for k, v in fdefaults.items():
-                    fparams[k] = fparams.get(k, v)
-                for k, v in adefaults.items():
-                    aparams[k] = aparams.get(k, v)
-
-                if name.startswith('am-'):
-                    fdefaults, adefaults = adefaults, fdefaults
-            else:
-                for k, v in self.default_args.get(name, {}).items():
-                    fparams[k] = fparams.get(k, v)
-
-            if add_reversed:
-                name = '#' + name
-            names.append(name)
-            params_all.append([fparams, aparams])
-
-        # store latest result for debug purposes
-        self._names = names
-        self._params_all = params_all
-        return names, params_all
+            pass
+        pass
 
     #### prebuilt test methods ##############################################
     def wavcomp(self, wavelets, signals='all', N=None, w=1.2, h=None,
