@@ -119,4 +119,34 @@ def ssqueeze(Wx, w=None, ssq_freqs=None, scales=None, Sfs=None, fs=None, t=None,
         https://github.com/ebrevdo/synchrosqueezing/blob/master/synchrosqueezing/
         synsq_squeeze.m
     """
+    def _ssqueeze(Tx, w, Wx, dWx, nv, ssq_freqs, scales, transform, ssq_scaletype,
+                  cwt_scaletype, flipud, gamma, Sfs):
+        pass
+    def _process_args(Wx, w, fs, t, transform, squeezing, scales, maprange,
+                      wavelet, dWx):
+        pass
+    pass
+
+
+#### `ssqueeze` utils ########################################################
+def _ssq_freqrange(maprange, dt, N, wavelet, scales, was_padded):
+    pass
+
+
+def _compute_associated_frequencies(scales, N, wavelet, ssq_scaletype, maprange,
+                                    was_padded=True, dt=1, transform='cwt'):
+    pass
+
+
+def _exp_fm(t, fmin, fmax):
+    pass
+
+
+def _get_center_frequency(wavelet, N, maprange, dt, scale, was_padded):
+    pass
+
+
+#### misc ####################################################################
+def _check_ssqueezing_args(squeezing, maprange=None, wavelet=None, difftype=None,
+                           difforder=None, get_w=None, transform='cwt'):
     pass

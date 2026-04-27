@@ -417,6 +417,10 @@ def _morsemom(p, gamma, beta, n_out=4):
         v1.6.9, http://www.jmlilly.net/jmlsoft.html
         https://github.com/jonathanlilly/jLab/blob/master/jWavelet/morsemom.m
     """
+    def morsemom1(p, gamma, beta):
+        pass
+    def morsef(gamma, beta):
+        pass
     pass
 
 

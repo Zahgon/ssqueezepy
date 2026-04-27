@@ -34,6 +34,24 @@ def gdefaults(module_and_obj=None, get_all=False, as_dict=None,
 
 def _get_gdefaults():
     """Global defaults fetched from configs.ini."""
+    def float_if_number(s):
+        """If float works, so should int."""
+        pass
+    def process_special(s):
+        pass
+    def process_value(value):
+        pass
+    pass
+
+
+def IS_PARALLEL():
+    """Returns False if 'SSQ_PARALLEL' environment flag was set to '0', or
+    if `parallel` in `configs.ini` is set to `0`; former overrides latter.
+    """
+    pass
+
+
+def USE_GPU():
     pass
 
 

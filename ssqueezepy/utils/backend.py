@@ -79,6 +79,8 @@ class TorchDummy():
 class CupyDummy():
     """Dummy class with dummy attributes."""
     def memoize(self, *args, **kwargs):
+        def wrap(fn):
+            pass
         pass
 
 

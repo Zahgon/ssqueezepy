@@ -39,7 +39,10 @@ def ssqueeze_fast(Wx, dWx, ssq_freqs, const, logscale=False, flipud=False,
     sparing two arrays and intermediate elementwise conditionals; see
     `help(algos.find_closest)` on how `k` is computed.
     """
+    def fn_name(transform, ssq_scaletype):
+        pass
     pass
+
 
 def indexed_sum_onfly(Wx, w, ssq_freqs, const=1, logscale=False, flipud=False,
                       out=None, parallel=None):

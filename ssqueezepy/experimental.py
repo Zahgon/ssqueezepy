@@ -9,11 +9,10 @@ from ._ssq_cwt import phase_cwt, phase_cwt_num
 from ._ssq_stft import phase_stft, _make_Sfs
 
 
-__all__ = ['freq_to_scale', 'scale_to_freq', 'phase_ssqueeze', 'phase_transform']
+__all__ = ["freq_to_scale", "scale_to_freq", "phase_ssqueeze", "phase_transform"]
 
 
-def freq_to_scale(freqs, wavelet, N, fs=1, n_search_scales=None, kind='peak',
-                  base=2):
+def freq_to_scale(freqs, wavelet, N, fs=1, n_search_scales=None, kind="peak", base=2):
     """Convert frequencies to scales.
 
     # Arguments:
@@ -48,10 +47,14 @@ def freq_to_scale(freqs, wavelet, N, fs=1, n_search_scales=None, kind='peak',
         scales: np.ndarray
             1D arrays of scales.
     """
+    def logb(x, base=2):
+        pass
+    def log(x):
+        pass
     pass
 
 
-def scale_to_freq(scales, wavelet, N, fs=1, padtype='reflect'):
+def scale_to_freq(scales, wavelet, N, fs=1, padtype="reflect"):
     """Convert scales to frequencies.
 
     # Arguments:
@@ -80,12 +83,30 @@ def scale_to_freq(scales, wavelet, N, fs=1, padtype='reflect'):
     pass
 
 
-def phase_ssqueeze(Wx, dWx=None, ssq_freqs=None, scales=None, Sfs=None, fs=1.,
-                   t=None, squeezing='sum', maprange=None, wavelet=None,
-                   gamma=None, was_padded=True, flipud=False,
-                   rpadded=False, padtype=None, N=None, n1=None,
-                   difftype=None, difforder=None,
-                   get_w=False, get_dWx=False, transform='cwt'):
+def phase_ssqueeze(
+    Wx,
+    dWx=None,
+    ssq_freqs=None,
+    scales=None,
+    Sfs=None,
+    fs=1.0,
+    t=None,
+    squeezing="sum",
+    maprange=None,
+    wavelet=None,
+    gamma=None,
+    was_padded=True,
+    flipud=False,
+    rpadded=False,
+    padtype=None,
+    N=None,
+    n1=None,
+    difftype=None,
+    difforder=None,
+    get_w=False,
+    get_dWx=False,
+    transform="cwt",
+):
     """Take `phase_transform` then `ssqueeze`. Can be used on an arbitrary
     CWT/STFT-like time-frequency transform `Wx`.
     Experimental; prefer `ssq_cwt` & `ssq_stft`.
@@ -115,10 +136,26 @@ def phase_ssqueeze(Wx, dWx=None, ssq_freqs=None, scales=None, Sfs=None, fs=1.,
     pass
 
 
-def phase_transform(Wx, dWx=None, difftype='trig', difforder=4, gamma=None,
-                    fs=1., Sfs=None, rpadded=False, padtype='reflect', N=None,
-                    n1=None, get_w=False, transform='cwt'):
+def phase_transform(
+    Wx,
+    dWx=None,
+    difftype="trig",
+    difforder=4,
+    gamma=None,
+    fs=1.0,
+    Sfs=None,
+    rpadded=False,
+    padtype="reflect",
+    N=None,
+    n1=None,
+    get_w=False,
+    transform="cwt",
+):
     """Unified method for CWT & STFT SSQ phase transforms.
     See `help(_ssq_cwt.phase_cwt)` and `help(_ssq_stft.phase_stft)`.
     """
+    def _cwt(Wx, dWx, fs, gamma, N, n1, difftype, difforder, rpadded, padtype, get_w):
+        pass
+    def _stft(Wx, dWx, fs, gamma, Sfs, get_w):
+        pass
     pass

@@ -41,6 +41,7 @@ variety of localization characteristics.
 13. **poly_cubic**: cubic polynomial frequency variation + pure tone
                (non-configurable)
 """
+
 import inspect
 import numpy as np
 import scipy.signal as sig
@@ -60,24 +61,24 @@ DEFAULT_N = 512
 DEFAULT_SNR = None
 DEFAULT_SEED = None
 DEFAULT_ARGS = {
-    'cosine': dict(f=64, phi0=0),
-    'sine':   dict(f=64, phi0=0),
-    'lchirp': dict(tmin=0, tmax=1, fmin=0, fmax=None),
-    'echirp': dict(tmin=0, tmax=1, fmin=1, fmax=None),
-    'hchirp': dict(tmin=0, tmax=1, fmin=1, fmax=None),
-    'jumps':  dict(),
-    'low':    dict(),
-    'am-cosine': dict(amin=.1),
-    'am-sine':   dict(amin=.1),
-    'am-exp':    dict(amin=.1),
-    'am-gauss':  dict(amin=.01),
-    'sine:am-cosine': (dict(f=16), dict(amin=.5)),
+    "cosine": dict(f=64, phi0=0),
+    "sine": dict(f=64, phi0=0),
+    "lchirp": dict(tmin=0, tmax=1, fmin=0, fmax=None),
+    "echirp": dict(tmin=0, tmax=1, fmin=1, fmax=None),
+    "hchirp": dict(tmin=0, tmax=1, fmin=1, fmax=None),
+    "jumps": dict(),
+    "low": dict(),
+    "am-cosine": dict(amin=0.1),
+    "am-sine": dict(amin=0.1),
+    "am-exp": dict(amin=0.1),
+    "am-gauss": dict(amin=0.01),
+    "sine:am-cosine": (dict(f=16), dict(amin=0.5)),
 }
 DEFAULT_TKW = dict(tmin=0, tmax=1, endpoint=True)
 
 
 #### Test signals ############################################################
-class TestSignals():
+class TestSignals:
     """Signals of varying time-frequency characteristics. Convenience methods
     to plot multiple signals and their transforms under varying wavelet / window
     parameters.
@@ -126,24 +127,63 @@ class TestSignals():
         seed: int / None
             If not None, will `np.random.seed(seed)` before applying `snr` noise.
     """
-    SUPPORTED = ['cosine', 'sine', 'lchirp', 'echirp', 'echirp_pc', 'hchirp',
-                 'par-lchirp', 'par-echirp', 'par-hchirp', 'jumps', 'packed',
-                 'packed-poly', 'poly-cubic',
-                 'am-sine', 'am-cosine', 'am-exp', 'am-gauss']
-    # what to show with `signal='all'`, and in what order
-    DEMO = ['cosine', 'sine',
-            'lchirp', 'echirp', 'hchirp',
-            '#lchirp', '#echirp', '#hchirp',
-            'par-lchirp', 'par-echirp', 'par-hchirp', '#par-lchirp',
-            'jumps', 'packed', 'packed-poly', 'poly-cubic',
-            'am-sine', 'am-cosine', 'am-exp', 'am-gauss']
 
-    def __init__(self, N=None, snr=None, default_args=None, default_tkw=None,
-                 warn_alias=True, seed=None):
+    SUPPORTED = [
+        "cosine",
+        "sine",
+        "lchirp",
+        "echirp",
+        "echirp_pc",
+        "hchirp",
+        "par-lchirp",
+        "par-echirp",
+        "par-hchirp",
+        "jumps",
+        "packed",
+        "packed-poly",
+        "poly-cubic",
+        "am-sine",
+        "am-cosine",
+        "am-exp",
+        "am-gauss",
+    ]
+    # what to show with `signal='all'`, and in what order
+    DEMO = [
+        "cosine",
+        "sine",
+        "lchirp",
+        "echirp",
+        "hchirp",
+        "#lchirp",
+        "#echirp",
+        "#hchirp",
+        "par-lchirp",
+        "par-echirp",
+        "par-hchirp",
+        "#par-lchirp",
+        "jumps",
+        "packed",
+        "packed-poly",
+        "poly-cubic",
+        "am-sine",
+        "am-cosine",
+        "am-exp",
+        "am-gauss",
+    ]
+
+    def __init__(
+        self,
+        N=None,
+        snr=None,
+        default_args=None,
+        default_tkw=None,
+        warn_alias=True,
+        seed=None,
+    ):
         pass
 
     #### test signals ########################################################
-    def _maybe_warn_alias(self, phi, tol=.02):
+    def _maybe_warn_alias(self, phi, tol=0.02):
         # allow non-trivial overshoot as it may occur but not worth warning
         pass
 
@@ -197,7 +237,7 @@ class TestSignals():
     def _echirp_pc_fn(self, t, tmin, tmax, fmin, fmax, get_w=False):
         pass
 
-    def hchirp(self, N=None, fmin=.1, fmax=None, **tkw):
+    def hchirp(self, N=None, fmin=0.1, fmax=None, **tkw):
         """
         >>> f(t)   = A / (B - t)^2
         >>> phi(t) = A * (1/(B - t) + 1/(tmin - B))
@@ -213,22 +253,19 @@ class TestSignals():
     def _hchirp_fn(self, t, tmin, tmax, fmin, fmax, get_w=False):
         pass
 
-    def par_lchirp(self, N=None, fmin1=None, fmax1=None, fmin2=None, fmax2=None,
-                   **tkw):
+    def par_lchirp(self, N=None, fmin1=None, fmax1=None, fmin2=None, fmax2=None, **tkw):
         """Linear frequency modulation in parallel. Should have
         `fmax2 > fmax1`, `fmin2 > fmin1`, and shared `tmin`, `tmax`.
         """
         pass
 
-    def par_echirp(self, N=None, fmin1=None, fmax1=None, fmin2=None, fmax2=None,
-                   **tkw):
+    def par_echirp(self, N=None, fmin1=None, fmax1=None, fmin2=None, fmax2=None, **tkw):
         """Exponential frequency modulation in parallel. Should have
         `fmax2 > fmax1`, `fmin2 > fmin1`, and shared `tmin`, `tmax`.
         """
         pass
 
-    def par_hchirp(self, N=None, fmin1=None, fmax1=None, fmin2=None, fmax2=None,
-                   **tkw):
+    def par_hchirp(self, N=None, fmin1=None, fmax1=None, fmin2=None, fmax2=None, **tkw):
         """Hyperbolic frequency modulation in parallel. Should have
         `fmax2 > fmax1`, `fmin2 > fmin1`, and shared `tmin`, `tmax`.
         """
@@ -242,11 +279,11 @@ class TestSignals():
         """Cosine amplitude modulation, `|cos(w) + 1| / 2`."""
         pass
 
-    def am_exp(self, N=None, amin=.1, amax=1, **tkw):
+    def am_exp(self, N=None, amin=0.1, amax=1, **tkw):
         """Uses `echirp`'s expression for `f(t)`."""
         pass
 
-    def am_gauss(self, N=None, amin=.1, amax=1, **tkw):
+    def am_gauss(self, N=None, amin=0.1, amax=1, **tkw):
         """Gaussian centered at center sample (`N/2`)."""
         pass
 
@@ -254,10 +291,10 @@ class TestSignals():
         """Large instant freq transitions, e.g. `cos(2pi f*t), f=2 -> f=100`."""
         pass
 
-    def packed(self, N=None, freqs=None, overlap=.8, **tkw):
+    def packed(self, N=None, freqs=None, overlap=0.8, **tkw):
         """Closely-spaced bands of sinusoids with majority overlap, e.g.
-            `cos(w*t[No:]) + cos((w+1)*t[-No:]) + cos((w+3)*t[No:]) + ...`,
-            `No = .8*len(t)`.
+        `cos(w*t[No:]) + cos((w+1)*t[-No:]) + cos((w+3)*t[No:]) + ...`,
+        `No = .8*len(t)`.
         """
         pass
 
@@ -276,7 +313,7 @@ class TestSignals():
         pass
 
     #### Test functions ######################################################
-    def demo(self, signals='all', N=None, dft=None):
+    def demo(self, signals="all", N=None, dft=None):
         """Plots signal waveforms, and optionally their DFTs.
 
         # Arguments:
@@ -297,7 +334,7 @@ class TestSignals():
         """
         pass
 
-    def test_transforms(self, fn, signals='all', N=None):
+    def test_transforms(self, fn, signals="all", N=None):
         """Make `fn` return `None` to skip visuals (e.g. if already done by `fn`).
 
         Input signature is `fn(x, t, params, ...)`, where
@@ -312,7 +349,7 @@ class TestSignals():
         pass
 
     #### utils ###############################################################
-    def make_signals(self, signals='all', N=None, get_params=False):
+    def make_signals(self, signals="all", N=None, get_params=False):
         """Generates `signals` signals of length `N`.
 
         Returns list of signals `[x0, x1, ...]` (or if `get_params`, dictionary
@@ -325,6 +362,10 @@ class TestSignals():
 
         Also see `help(ssqueezepy._test_signals)`.
         """
+
+        def _process_args(name, fparams, aparams):
+            pass
+
         pass
 
     @classmethod
@@ -364,24 +405,39 @@ class TestSignals():
             Defaults loaded according to precedence: `name:am-name` overrides
             `name` and `am-name`, but latter two are used if former isn't set.
         """
+
         def raise_type_error(signal):
             pass
+
         pass
 
     #### prebuilt test methods ##############################################
-    def wavcomp(self, wavelets, signals='all', N=None, w=1.2, h=None,
-                tight_kw=None):
+    def wavcomp(self, wavelets, signals="all", N=None, w=1.2, h=None, tight_kw=None):
         """Plots CWT & SSQ_CWT taken with `wavelets` wavelets side by side,
         vertically.
         """
         pass
 
     def _wavcomp_fn(self, x, t, params, wavelets, w=1.2, h=None, tight_kw=None):
+        def _get_default_hspace():
+            pass
+
         pass
 
-    def cwt_vs_stft(self, wavelet, window, signals='all', N=None,
-                    win_len=None, n_fft=None, window_name=None, config_str='',
-                    w=1.2, h=.9, tight_kw=None):
+    def cwt_vs_stft(
+        self,
+        wavelet,
+        window,
+        signals="all",
+        N=None,
+        win_len=None,
+        n_fft=None,
+        window_name=None,
+        config_str="",
+        w=1.2,
+        h=0.9,
+        tight_kw=None,
+    ):
         """Plots CWT & SSQ_CWT, and STFT & SSQ_STFT of `signals` taken with
         `wavelet` and `window` along the rest of parameters.
 
@@ -391,9 +447,24 @@ class TestSignals():
         """
         pass
 
-    def _cwt_vs_stft_fn(self, x, t, params, wavelet, window, win_len=None,
-                        n_fft=None, window_name=None, config_str='', w=1.2, h=.9,
-                        tight_kw=None):
+    def _cwt_vs_stft_fn(
+        self,
+        x,
+        t,
+        params,
+        wavelet,
+        window,
+        win_len=None,
+        n_fft=None,
+        window_name=None,
+        config_str="",
+        w=1.2,
+        h=0.9,
+        tight_kw=None,
+    ):
+        def _get_default_hspace():
+            pass
+
         pass
 
     @staticmethod
@@ -401,12 +472,32 @@ class TestSignals():
         pass
 
     @staticmethod
-    def _title_stft(window, name, x, fparams, aparams, win_len=None, n_fft=None,
-                    window_name='', config_str='', wrap_len=53):
+    def _title_stft(
+        window,
+        name,
+        x,
+        fparams,
+        aparams,
+        win_len=None,
+        n_fft=None,
+        window_name="",
+        config_str="",
+        wrap_len=53,
+    ):
         pass
 
-    def ridgecomp(self, signals='all', N=None, penalty=20, n_ridges=2, bw=None,
-                  transform='cwt', w=1.2, h=.4, **transform_kw):
+    def ridgecomp(
+        self,
+        signals="all",
+        N=None,
+        penalty=20,
+        n_ridges=2,
+        bw=None,
+        transform="cwt",
+        w=1.2,
+        h=0.4,
+        **transform_kw,
+    ):
         """Plots extracted ridges from a CWT or STFT and them SSQ'd of `signals`,
         superimposed on the transform itself, passing in `transform_kw` to
         `ssq_cwt` or `ssq_stft`. `w` & `h` control plots' width & height.
@@ -415,8 +506,19 @@ class TestSignals():
         """
         pass
 
-    def _ridgecomp_fn(self, x, t, params, penalty=20, n_ridges=2, bw=None,
-                      transform='cwt', w=1.2, h=.4, **transform_kw):
+    def _ridgecomp_fn(
+        self,
+        x,
+        t,
+        params,
+        penalty=20,
+        n_ridges=2,
+        bw=None,
+        transform="cwt",
+        w=1.2,
+        h=0.4,
+        **transform_kw,
+    ):
         pass
 
 

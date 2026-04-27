@@ -253,6 +253,10 @@ class Wavelet():
         pass
 
     def _validate_and_set_wavelet(self, wavelet):
+        def process_dtype(wavopts, user_passed_float32):
+            pass
+        def set_dtype_from_out():
+            pass
         pass
 
 
